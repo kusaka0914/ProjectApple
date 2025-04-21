@@ -3,10 +3,12 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../edit_profile_screen.dart';
+import '../post_detail_screen.dart';
 import 'dart:io';
 import 'package:path_provider/path_provider.dart';
 import 'package:path/path.dart' as path;
 import 'package:url_launcher/url_launcher.dart';
+import '../auth_screen.dart';
 
 class ProfileTab extends ConsumerWidget {
   const ProfileTab({super.key});
@@ -64,7 +66,21 @@ class ProfileTab extends ConsumerWidget {
     );
 
     if (shouldLogout == true && context.mounted) {
-      await FirebaseAuth.instance.signOut();
+      try {
+        await FirebaseAuth.instance.signOut();
+        if (context.mounted) {
+          Navigator.of(context).pushNamedAndRemoveUntil('/', (route) => false);
+        }
+      } catch (e) {
+        if (context.mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('ログアウトに失敗しました'),
+              backgroundColor: Colors.red,
+            ),
+          );
+        }
+      }
     }
   }
 
@@ -357,10 +373,17 @@ class ProfileTab extends ConsumerWidget {
 
             return GestureDetector(
               onTap: () {
-                // TODO: 投稿の詳細画面に遷移
-                ScaffoldMessenger.of(
+                Navigator.push(
                   context,
-                ).showSnackBar(SnackBar(content: Text(caption ?? '説明なし')));
+                  MaterialPageRoute(
+                    builder:
+                        (context) => PostDetailScreen(
+                          postId: posts[index].id,
+                          post: post,
+                          userId: post['userId'] as String,
+                        ),
+                  ),
+                );
               },
               child: Stack(
                 fit: StackFit.expand,

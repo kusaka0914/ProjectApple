@@ -34,9 +34,9 @@ dependencies:
     sdk: flutter
   cupertino_icons: ^1.0.2
   firebase_core: ^2.24.2
-  firebase_auth: ^4.16.0
-  cloud_firestore: ^4.17.5
-  firebase_storage: ^11.6.5
+  firebase_auth: ^4.15.3
+  cloud_firestore: ^4.13.6
+  firebase_storage: ^11.5.6
   image_picker: ^1.1.2
   shared_preferences: ^2.2.2
   provider: ^6.1.1
@@ -51,6 +51,9 @@ dependencies:
   riverpod_generator: ^2.6.4
   path_provider: ^2.1.5
   timeago: ^3.7.0
+  share_plus: ^10.1.4
+  # google_sign_in: ^5.4.4  # 一時的にコメントアウト
+  table_calendar: ^3.0.9
 
 dev_dependencies:
   flutter_test:

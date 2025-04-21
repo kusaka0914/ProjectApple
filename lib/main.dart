@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'firebase_options.dart';
 import 'views/auth_screen.dart';
+import 'views/home_screen.dart';
 import 'package:timeago/timeago.dart' as timeago;
 
 Future<void> main() async {
@@ -34,7 +35,11 @@ class AomoriTourismApp extends StatelessWidget {
       ],
       supportedLocales: const [Locale('ja', 'JP'), Locale('en', 'US')],
       locale: const Locale('ja', 'JP'),
-      home: const AuthScreen(),
+      initialRoute: '/',
+      routes: {
+        '/': (context) => const AuthScreen(),
+        '/home': (context) => const HomeScreen(),
+      },
     );
   }
 }

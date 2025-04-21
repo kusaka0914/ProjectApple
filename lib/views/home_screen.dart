@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'tabs/feed_tab.dart';
-import 'tabs/map_tab.dart';
-import 'tabs/search_tab.dart';
+import 'tabs/home_tab.dart';
+import 'tabs/event_tab.dart';
+import 'tabs/job_tab.dart';
+import 'tabs/message_tab.dart';
 import 'tabs/profile_tab.dart';
 import 'posts/post_image_picker_screen.dart';
 
@@ -17,9 +18,10 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   int _currentIndex = 0;
 
   final List<Widget> _tabs = [
-    const FeedTab(),
-    const MapTab(),
-    const SearchTab(),
+    const HomeTab(),
+    const EventTab(),
+    const JobTab(),
+    const MessageTab(),
     const ProfileTab(),
   ];
 
@@ -44,17 +46,22 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
           NavigationDestination(
             icon: Icon(Icons.home_outlined),
             selectedIcon: Icon(Icons.home),
-            label: 'フィード',
+            label: 'ホーム',
           ),
           NavigationDestination(
-            icon: Icon(Icons.map_outlined),
-            selectedIcon: Icon(Icons.map),
-            label: 'マップ',
+            icon: Icon(Icons.event_outlined),
+            selectedIcon: Icon(Icons.event),
+            label: 'イベント',
           ),
           NavigationDestination(
-            icon: Icon(Icons.search_outlined),
-            selectedIcon: Icon(Icons.search),
-            label: '検索',
+            icon: Icon(Icons.work_outline),
+            selectedIcon: Icon(Icons.work),
+            label: '仕事',
+          ),
+          NavigationDestination(
+            icon: Icon(Icons.message_outlined),
+            selectedIcon: Icon(Icons.message),
+            label: 'メッセージ',
           ),
           NavigationDestination(
             icon: Icon(Icons.person_outline),
