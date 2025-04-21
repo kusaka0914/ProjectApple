@@ -5,6 +5,7 @@ import 'tabs/event_tab.dart';
 import 'tabs/job_tab.dart';
 import 'tabs/message_tab.dart';
 import 'tabs/profile_tab.dart';
+import 'tabs/info_tab.dart';
 import 'posts/post_image_picker_screen.dart';
 
 class HomeScreen extends ConsumerStatefulWidget {
@@ -21,7 +22,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     const HomeTab(),
     const EventTab(),
     const JobTab(),
-    const MessageTab(),
+    const InfoTab(),
     const ProfileTab(),
   ];
 
@@ -59,9 +60,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
             label: '仕事',
           ),
           NavigationDestination(
-            icon: Icon(Icons.message_outlined),
-            selectedIcon: Icon(Icons.message),
-            label: 'メッセージ',
+            icon: Icon(Icons.info_outline),
+            selectedIcon: Icon(Icons.info),
+            label: '情報',
           ),
           NavigationDestination(
             icon: Icon(Icons.person_outline),
@@ -70,13 +71,12 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
           ),
         ],
       ),
-      floatingActionButton:
-          _currentIndex != 1
-              ? FloatingActionButton(
-                onPressed: _showPostImagePickerScreen,
-                child: const Icon(Icons.add),
-              )
-              : null,
+      floatingActionButton: _currentIndex != 1
+          ? FloatingActionButton(
+              onPressed: _showPostImagePickerScreen,
+              child: const Icon(Icons.add),
+            )
+          : null,
     );
   }
 }

@@ -5,13 +5,52 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import '../edit_profile_screen.dart';
 import '../post_detail_screen.dart';
 import 'dart:io';
+import 'dart:async';
 import 'package:path_provider/path_provider.dart';
 import 'package:path/path.dart' as path;
 import 'package:url_launcher/url_launcher.dart';
 import '../auth_screen.dart';
 
-class ProfileTab extends ConsumerWidget {
+class ProfileTab extends ConsumerStatefulWidget {
   const ProfileTab({super.key});
+
+  @override
+  ConsumerState<ProfileTab> createState() => _ProfileTabState();
+}
+
+class _ProfileTabState extends ConsumerState<ProfileTab> {
+  bool _isLoading = false;
+  StreamSubscription<DocumentSnapshot>? _subscription;
+
+  @override
+  void initState() {
+    super.initState();
+    _startListening();
+  }
+
+  @override
+  void dispose() {
+    _subscription?.cancel();
+    super.dispose();
+  }
+
+  void _startListening() {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null) return;
+
+    _subscription = FirebaseFirestore.instance
+        .collection('users')
+        .doc(user.uid)
+        .snapshots()
+        .listen(
+      (snapshot) {
+        // ユーザーデータの変更を監視
+      },
+      onError: (error) {
+        print('Error listening to user data: $error');
+      },
+    );
+  }
 
   Future<String?> _getLocalImagePath(String userId) async {
     final directory = await getApplicationDocumentsDirectory();
@@ -48,37 +87,56 @@ class ProfileTab extends ConsumerWidget {
   Future<void> _showLogoutDialog(BuildContext context) async {
     final shouldLogout = await showDialog<bool>(
       context: context,
-      builder:
-          (context) => AlertDialog(
-            title: const Text('ログアウト'),
-            content: const Text('ログアウトしてもよろしいですか？'),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.pop(context, false),
-                child: const Text('キャンセル'),
-              ),
-              TextButton(
-                onPressed: () => Navigator.pop(context, true),
-                child: const Text('ログアウト', style: TextStyle(color: Colors.red)),
-              ),
-            ],
+      builder: (context) => AlertDialog(
+        title: const Text('ログアウト'),
+        content: const Text('ログアウトしてもよろしいですか？'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('キャンセル'),
           ),
+          TextButton(
+            onPressed: () => Navigator.pop(context, true),
+            child: const Text('ログアウト', style: TextStyle(color: Colors.red)),
+          ),
+        ],
+      ),
     );
 
     if (shouldLogout == true && context.mounted) {
       try {
+        setState(() => _isLoading = true);
+
+        // 1. すべてのリスナーを解除
+        _subscription?.cancel();
+
+        // 2. ログアウト処理を実行
         await FirebaseAuth.instance.signOut();
-        if (context.mounted) {
-          Navigator.of(context).pushNamedAndRemoveUntil('/', (route) => false);
-        }
+
+        // 3. ログアウト状態を確認
+        FirebaseAuth.instance.authStateChanges().listen((User? user) {
+          if (user == null && context.mounted) {
+            // ログアウトが確実に完了している場合のみ画面遷移
+            Navigator.of(context).pushAndRemoveUntil(
+              MaterialPageRoute(
+                builder: (context) => const AuthScreen(),
+              ),
+              (route) => false,
+            );
+          }
+        });
       } catch (e) {
         if (context.mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('ログアウトに失敗しました'),
+            SnackBar(
+              content: Text('ログアウトに失敗しました: ${e.toString()}'),
               backgroundColor: Colors.red,
             ),
           );
+        }
+      } finally {
+        if (mounted) {
+          setState(() => _isLoading = false);
         }
       }
     }
@@ -87,22 +145,27 @@ class ProfileTab extends ConsumerWidget {
   void _showSettingsMenu(BuildContext context) {
     showModalBottomSheet(
       context: context,
-      builder:
-          (context) => SafeArea(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                ListTile(
-                  leading: const Icon(Icons.logout),
-                  title: const Text('ログアウト'),
-                  onTap: () {
-                    Navigator.pop(context);
-                    _showLogoutDialog(context);
-                  },
-                ),
-              ],
-            ),
-          ),
+      builder: (context) => SafeArea(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            if (_isLoading)
+              const Padding(
+                padding: EdgeInsets.all(16),
+                child: Center(child: CircularProgressIndicator()),
+              )
+            else
+              ListTile(
+                leading: const Icon(Icons.logout),
+                title: const Text('ログアウト'),
+                onTap: () {
+                  Navigator.pop(context);
+                  _showLogoutDialog(context);
+                },
+              ),
+          ],
+        ),
+      ),
     );
   }
 
@@ -116,7 +179,7 @@ class ProfileTab extends ConsumerWidget {
   }
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  Widget build(BuildContext context) {
     final user = FirebaseAuth.instance.currentUser;
 
     if (user == null) {
@@ -124,11 +187,10 @@ class ProfileTab extends ConsumerWidget {
     }
 
     return StreamBuilder<DocumentSnapshot>(
-      stream:
-          FirebaseFirestore.instance
-              .collection('users')
-              .doc(user.uid)
-              .snapshots(),
+      stream: FirebaseFirestore.instance
+          .collection('users')
+          .doc(user.uid)
+          .snapshots(),
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
           return const Center(child: CircularProgressIndicator());
@@ -174,12 +236,11 @@ class ProfileTab extends ConsumerWidget {
                       children: [
                         CircleAvatar(
                           radius: 40,
-                          backgroundImage:
-                              photoUrl != null
-                                  ? NetworkImage(photoUrl) as ImageProvider
-                                  : const AssetImage(
-                                    'assets/default_profile.png',
-                                  ),
+                          backgroundImage: photoUrl != null
+                              ? NetworkImage(photoUrl) as ImageProvider
+                              : const AssetImage(
+                                  'assets/default_profile.png',
+                                ),
                         ),
                         const SizedBox(width: 24),
                         Expanded(
@@ -337,12 +398,11 @@ class ProfileTab extends ConsumerWidget {
 
   Widget _buildPostsGrid(String userId) {
     return StreamBuilder<QuerySnapshot>(
-      stream:
-          FirebaseFirestore.instance
-              .collection('posts')
-              .where('userId', isEqualTo: userId)
-              .orderBy('createdAt', descending: true)
-              .snapshots(),
+      stream: FirebaseFirestore.instance
+          .collection('posts')
+          .where('userId', isEqualTo: userId)
+          .orderBy('createdAt', descending: true)
+          .snapshots(),
       builder: (context, snapshot) {
         if (snapshot.hasError) {
           return SliverToBoxAdapter(
@@ -398,12 +458,11 @@ class ProfileTab extends ConsumerWidget {
                 Navigator.push(
                   context,
                   MaterialPageRoute(
-                    builder:
-                        (context) => PostDetailScreen(
-                          postId: posts[index].id,
-                          post: post,
-                          userId: post['userId'] as String,
-                        ),
+                    builder: (context) => PostDetailScreen(
+                      postId: posts[index].id,
+                      post: post,
+                      userId: post['userId'] as String,
+                    ),
                   ),
                 );
               },
@@ -418,11 +477,10 @@ class ProfileTab extends ConsumerWidget {
                         if (loadingProgress == null) return child;
                         return Center(
                           child: CircularProgressIndicator(
-                            value:
-                                loadingProgress.expectedTotalBytes != null
-                                    ? loadingProgress.cumulativeBytesLoaded /
-                                        loadingProgress.expectedTotalBytes!
-                                    : null,
+                            value: loadingProgress.expectedTotalBytes != null
+                                ? loadingProgress.cumulativeBytesLoaded /
+                                    loadingProgress.expectedTotalBytes!
+                                : null,
                           ),
                         );
                       },

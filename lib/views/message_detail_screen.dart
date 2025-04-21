@@ -6,8 +6,13 @@ import '../models/message.dart';
 
 class MessageDetailScreen extends StatefulWidget {
   final String messageId;
+  final bool isOpenChat;
 
-  const MessageDetailScreen({super.key, required this.messageId});
+  const MessageDetailScreen({
+    super.key,
+    required this.messageId,
+    this.isOpenChat = false,
+  });
 
   @override
   State<MessageDetailScreen> createState() => _MessageDetailScreenState();
@@ -25,7 +30,9 @@ class _MessageDetailScreenState extends State<MessageDetailScreen> {
   @override
   void initState() {
     super.initState();
-    _markAsRead();
+    if (!widget.isOpenChat) {
+      _markAsRead();
+    }
     _startListening();
   }
 
@@ -52,9 +59,8 @@ class _MessageDetailScreenState extends State<MessageDetailScreen> {
       _hasError = false;
     });
 
-    final messageRef = FirebaseFirestore.instance
-        .collection('messages')
-        .doc(widget.messageId);
+    final messageRef =
+        FirebaseFirestore.instance.collection('messages').doc(widget.messageId);
 
     // 3秒のタイムアウトを設定
     Timer(const Duration(seconds: 3), () {
@@ -101,18 +107,14 @@ class _MessageDetailScreenState extends State<MessageDetailScreen> {
         throw Exception('ログインが必要です');
       }
 
-      final messageDoc =
-          await FirebaseFirestore.instance
-              .collection('messages')
-              .doc(widget.messageId)
-              .get();
+      final messageDoc = await FirebaseFirestore.instance
+          .collection('messages')
+          .doc(widget.messageId)
+          .get();
 
       if (!messageDoc.exists) {
         throw Exception('メッセージが存在しません');
       }
-
-      final message = Message.fromFirestore(messageDoc);
-      final receiverId = message.senderId; // 送信者が次の受信者になる
 
       // メッセージを追加
       await FirebaseFirestore.instance
@@ -120,21 +122,22 @@ class _MessageDetailScreenState extends State<MessageDetailScreen> {
           .doc(widget.messageId)
           .collection('chat')
           .add({
-            'senderId': currentUserId,
-            'message': _messageController.text,
-            'createdAt': FieldValue.serverTimestamp(),
-          });
+        'senderId': currentUserId,
+        'senderName':
+            FirebaseAuth.instance.currentUser?.displayName ?? 'Unknown',
+        'message': _messageController.text,
+        'createdAt': FieldValue.serverTimestamp(),
+      });
 
       // 最後のメッセージを更新
       await FirebaseFirestore.instance
           .collection('messages')
           .doc(widget.messageId)
           .update({
-            'lastMessage': _messageController.text,
-            'lastMessageTime': FieldValue.serverTimestamp(),
-            'isRead': false,
-            'receiverId': receiverId,
-          });
+        'lastMessage': _messageController.text,
+        'lastMessageTime': FieldValue.serverTimestamp(),
+        'isRead': widget.isOpenChat,
+      });
 
       _messageController.clear();
     } catch (e) {
@@ -166,20 +169,21 @@ class _MessageDetailScreenState extends State<MessageDetailScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: StreamBuilder<DocumentSnapshot>(
-          stream:
-              FirebaseFirestore.instance
-                  .collection('messages')
-                  .doc(widget.messageId)
-                  .snapshots(),
-          builder: (context, snapshot) {
-            if (!snapshot.hasData || !snapshot.data!.exists) {
-              return const Text('メッセージが存在しません');
-            }
-            final message = Message.fromFirestore(snapshot.data!);
-            return Text(message.senderName);
-          },
-        ),
+        title: widget.isOpenChat
+            ? const Text('みんなのチャット')
+            : StreamBuilder<DocumentSnapshot>(
+                stream: FirebaseFirestore.instance
+                    .collection('messages')
+                    .doc(widget.messageId)
+                    .snapshots(),
+                builder: (context, snapshot) {
+                  if (!snapshot.hasData || !snapshot.data!.exists) {
+                    return const Text('メッセージが存在しません');
+                  }
+                  final message = Message.fromFirestore(snapshot.data!);
+                  return Text(message.senderName);
+                },
+              ),
       ),
       body: _buildBody(),
     );
@@ -219,13 +223,12 @@ class _MessageDetailScreenState extends State<MessageDetailScreen> {
       children: [
         Expanded(
           child: StreamBuilder<QuerySnapshot>(
-            stream:
-                FirebaseFirestore.instance
-                    .collection('messages')
-                    .doc(widget.messageId)
-                    .collection('chat')
-                    .orderBy('createdAt', descending: true)
-                    .snapshots(),
+            stream: FirebaseFirestore.instance
+                .collection('messages')
+                .doc(widget.messageId)
+                .collection('chat')
+                .orderBy('createdAt', descending: true)
+                .snapshots(),
             builder: (context, snapshot) {
               if (snapshot.hasError) {
                 print('Error in message detail: ${snapshot.error}');
@@ -307,7 +310,35 @@ class _MessageDetailScreenState extends State<MessageDetailScreen> {
                 itemCount: messages.length,
                 itemBuilder: (context, index) {
                   final message = messages[index];
+                  final messageType = message['type'] as String? ?? 'user';
+
+                  // システムメッセージの場合
+                  if (messageType == 'system') {
+                    return Center(
+                      child: Container(
+                        margin: const EdgeInsets.symmetric(vertical: 8),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 16,
+                          vertical: 8,
+                        ),
+                        decoration: BoxDecoration(
+                          color: Colors.grey[200],
+                          borderRadius: BorderRadius.circular(16),
+                        ),
+                        child: Text(
+                          message['message'] as String,
+                          style: TextStyle(
+                            color: Colors.grey[600],
+                            fontSize: 12,
+                          ),
+                        ),
+                      ),
+                    );
+                  }
+
                   final isMe = message['senderId'] == currentUserId;
+                  final senderName =
+                      message['senderName'] as String? ?? 'Unknown';
 
                   return Align(
                     alignment:
@@ -317,19 +348,40 @@ class _MessageDetailScreenState extends State<MessageDetailScreen> {
                         vertical: 4,
                         horizontal: 8,
                       ),
-                      padding: const EdgeInsets.symmetric(
-                        vertical: 8,
-                        horizontal: 12,
-                      ),
-                      decoration: BoxDecoration(
-                        color: isMe ? Colors.blue : Colors.grey[300],
-                        borderRadius: BorderRadius.circular(16),
-                      ),
-                      child: Text(
-                        message['message'] as String,
-                        style: TextStyle(
-                          color: isMe ? Colors.white : Colors.black,
-                        ),
+                      child: Column(
+                        crossAxisAlignment: isMe
+                            ? CrossAxisAlignment.end
+                            : CrossAxisAlignment.start,
+                        children: [
+                          if (!isMe && widget.isOpenChat)
+                            Padding(
+                              padding:
+                                  const EdgeInsets.only(left: 12, bottom: 4),
+                              child: Text(
+                                senderName,
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  color: Colors.grey[600],
+                                ),
+                              ),
+                            ),
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                              vertical: 8,
+                              horizontal: 12,
+                            ),
+                            decoration: BoxDecoration(
+                              color: isMe ? Colors.blue : Colors.grey[300],
+                              borderRadius: BorderRadius.circular(16),
+                            ),
+                            child: Text(
+                              message['message'] as String,
+                              style: TextStyle(
+                                color: isMe ? Colors.white : Colors.black,
+                              ),
+                            ),
+                          ),
+                        ],
                       ),
                     ),
                   );
@@ -367,14 +419,13 @@ class _MessageDetailScreenState extends State<MessageDetailScreen> {
                   ),
                 ),
                 IconButton(
-                  icon:
-                      _isSending
-                          ? const SizedBox(
-                            width: 24,
-                            height: 24,
-                            child: CircularProgressIndicator(strokeWidth: 2),
-                          )
-                          : const Icon(Icons.send),
+                  icon: _isSending
+                      ? const SizedBox(
+                          width: 24,
+                          height: 24,
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        )
+                      : const Icon(Icons.send),
                   onPressed: _sendMessage,
                 ),
               ],

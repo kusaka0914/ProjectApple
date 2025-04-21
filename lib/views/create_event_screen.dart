@@ -104,15 +104,19 @@ class _CreateEventScreenState extends State<CreateEventScreen> {
         'location': _locationController.text,
         'date': Timestamp.fromDate(eventDateTime),
         'imageUrl': imageUrl,
-        'organizerId': user.uid,
+        'userId': user.uid,
         'maxParticipants': int.parse(_maxParticipantsController.text),
         'participantsCount': 0,
         'participantIds': [],
         'visibleParticipantIds': [],
         'createdAt': FieldValue.serverTimestamp(),
+        'updatedAt': FieldValue.serverTimestamp(),
+        'status': 'active',
+        'category': 'general',
       };
 
-      await FirebaseFirestore.instance.collection('events').add(eventData);
+      final docRef =
+          await FirebaseFirestore.instance.collection('events').add(eventData);
 
       if (mounted) {
         ScaffoldMessenger.of(

@@ -3,6 +3,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import '../models/event.dart';
 import 'tabs/profile_tab.dart';
+import 'package:intl/intl.dart';
 
 class EventDetailScreen extends StatefulWidget {
   final Event event;
@@ -109,10 +110,22 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
     }
   }
 
+  String _formatDate(DateTime date) {
+    final formatter = DateFormat('yyyy年MM月dd日 HH:mm', 'ja_JP');
+    return formatter.format(date);
+  }
+
   @override
   Widget build(BuildContext context) {
+    final eventDate = widget.event.date.toDate();
     return Scaffold(
-      appBar: AppBar(title: Text(widget.event.title)),
+      appBar: AppBar(
+        title: Text(widget.event.title),
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back),
+          onPressed: () => Navigator.pop(context),
+        ),
+      ),
       body:
           _isLoading
               ? const Center(child: CircularProgressIndicator())
@@ -121,13 +134,67 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
+                    FutureBuilder<DocumentSnapshot>(
+                      future:
+                          FirebaseFirestore.instance
+                              .collection('users')
+                              .doc(widget.event.userId)
+                              .get(),
+                      builder: (context, snapshot) {
+                        if (!snapshot.hasData) {
+                          return const Row(
+                            children: [
+                              CircleAvatar(
+                                radius: 20,
+                                child: Icon(Icons.person),
+                              ),
+                              SizedBox(width: 12),
+                              Text('読み込み中...'),
+                            ],
+                          );
+                        }
+                        final userData =
+                            snapshot.data!.data() as Map<String, dynamic>?;
+                        return Row(
+                          children: [
+                            CircleAvatar(
+                              radius: 20,
+                              backgroundColor: Colors.grey[200],
+                              child:
+                                  userData?['photoUrl'] != null
+                                      ? ClipOval(
+                                        child: Image.network(
+                                          userData!['photoUrl'],
+                                          width: 40,
+                                          height: 40,
+                                          fit: BoxFit.cover,
+                                          errorBuilder:
+                                              (context, error, stackTrace) =>
+                                                  const Icon(Icons.person),
+                                        ),
+                                      )
+                                      : const Icon(Icons.person),
+                            ),
+                            const SizedBox(width: 12),
+                            Text(
+                              userData?['displayName'] ?? '不明なユーザー',
+                              style: const TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                          ],
+                        );
+                      },
+                    ),
+                    const SizedBox(height: 16),
                     Text(
                       widget.event.title,
-                      style: Theme.of(context).textTheme.headlineSmall,
+                      style: Theme.of(context).textTheme.headlineMedium,
                     ),
-                    const SizedBox(height: 8),
+                    const SizedBox(height: 16),
                     Text(
-                      '日時: ${widget.event.date.toString().split('.')[0]}',
+                      '日時: ${_formatDate(eventDate)}',
                       style: Theme.of(context).textTheme.titleMedium,
                     ),
                     const SizedBox(height: 8),

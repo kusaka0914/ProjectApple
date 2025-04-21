@@ -3,6 +3,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import '../models/app_user.dart';
 import 'message_detail_screen.dart';
+import 'user_profile_screen.dart';
 
 class SearchResultScreen extends StatefulWidget {
   final String searchQuery;
@@ -17,6 +18,8 @@ class _SearchResultScreenState extends State<SearchResultScreen> {
   bool _isLoading = true;
   bool _hasError = false;
   List<AppUser> _users = [];
+  final Map<String, bool> _followStatus = {};
+  final Map<String, bool> _loadingStatus = {};
 
   @override
   void initState() {
@@ -34,18 +37,27 @@ class _SearchResultScreenState extends State<SearchResultScreen> {
       final currentUserId = FirebaseAuth.instance.currentUser?.uid;
       if (currentUserId == null) return;
 
-      final querySnapshot =
-          await FirebaseFirestore.instance
-              .collection('users')
-              .where('name', isGreaterThanOrEqualTo: widget.searchQuery)
-              .where('name', isLessThan: widget.searchQuery + '\uf8ff')
-              .get();
+      // 検索クエリを小文字に変換
+      final lowercaseQuery = widget.searchQuery.toLowerCase();
 
-      final users =
-          querySnapshot.docs
-              .map((doc) => AppUser.fromFirestore(doc))
-              .where((user) => user.id != currentUserId)
-              .toList();
+      // displayNameフィールドで検索
+      final querySnapshot = await FirebaseFirestore.instance
+          .collection('users')
+          .where('displayName', isGreaterThanOrEqualTo: lowercaseQuery)
+          .where('displayName', isLessThan: lowercaseQuery + '\uf8ff')
+          .get();
+
+      final users = querySnapshot.docs
+          .map((doc) => AppUser.fromFirestore(doc))
+          .where((user) => user.id != currentUserId)
+          .toList();
+
+      // フォロー状態を確認
+      for (final user in users) {
+        final isFollowing = await _checkFollowStatus(user.id);
+        _followStatus[user.id] = isFollowing;
+        _loadingStatus[user.id] = false;
+      }
 
       setState(() {
         _users = users;
@@ -60,61 +72,97 @@ class _SearchResultScreenState extends State<SearchResultScreen> {
     }
   }
 
-  Future<void> _startChat(AppUser user) async {
+  Future<bool> _checkFollowStatus(String userId) async {
+    final currentUserId = FirebaseAuth.instance.currentUser?.uid;
+    if (currentUserId == null) return false;
+
+    final doc = await FirebaseFirestore.instance
+        .collection('users')
+        .doc(currentUserId)
+        .collection('following')
+        .doc(userId)
+        .get();
+
+    return doc.exists;
+  }
+
+  Future<void> _toggleFollow(AppUser user) async {
     final currentUserId = FirebaseAuth.instance.currentUser?.uid;
     if (currentUserId == null) return;
 
+    setState(() => _loadingStatus[user.id] = true);
+
     try {
-      // 既存のメッセージを検索
-      final existingMessage =
-          await FirebaseFirestore.instance
-              .collection('messages')
-              .where('senderId', whereIn: [currentUserId, user.id])
-              .where('receiverId', whereIn: [currentUserId, user.id])
-              .get();
+      final batch = FirebaseFirestore.instance.batch();
+      final followingRef = FirebaseFirestore.instance
+          .collection('users')
+          .doc(currentUserId)
+          .collection('following')
+          .doc(user.id);
 
-      String messageId;
-      if (existingMessage.docs.isNotEmpty) {
-        messageId = existingMessage.docs.first.id;
+      final followerRef = FirebaseFirestore.instance
+          .collection('users')
+          .doc(user.id)
+          .collection('followers')
+          .doc(currentUserId);
+
+      final currentUserRef =
+          FirebaseFirestore.instance.collection('users').doc(currentUserId);
+
+      final targetUserRef =
+          FirebaseFirestore.instance.collection('users').doc(user.id);
+
+      final isFollowing = _followStatus[user.id] ?? false;
+
+      if (isFollowing) {
+        // フォロー解除
+        batch.delete(followingRef);
+        batch.delete(followerRef);
+        batch.update(
+            currentUserRef, {'followingCount': FieldValue.increment(-1)});
+        batch.update(
+            targetUserRef, {'followersCount': FieldValue.increment(-1)});
       } else {
-        // 新しいメッセージを作成
-        final newMessage = await FirebaseFirestore.instance
-            .collection('messages')
-            .add({
-              'senderId': currentUserId,
-              'senderName':
-                  FirebaseAuth.instance.currentUser?.displayName ?? '',
-              'senderImageUrl':
-                  FirebaseAuth.instance.currentUser?.photoURL ?? '',
-              'receiverId': user.id,
-              'receiverName': user.name,
-              'receiverImageUrl': user.imageUrl,
-              'lastMessage': '',
-              'lastMessageTime': FieldValue.serverTimestamp(),
-              'isRead': true,
-            });
-        messageId = newMessage.id;
+        // フォロー
+        final now = DateTime.now();
+        batch.set(followingRef, {
+          'createdAt': now,
+        });
+        batch.set(followerRef, {
+          'createdAt': now,
+        });
+        batch.update(
+            currentUserRef, {'followingCount': FieldValue.increment(1)});
+        batch
+            .update(targetUserRef, {'followersCount': FieldValue.increment(1)});
       }
 
-      if (mounted) {
-        Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (context) => MessageDetailScreen(messageId: messageId),
-          ),
-        );
-      }
+      await batch.commit();
+
+      setState(() {
+        _followStatus[user.id] = !isFollowing;
+      });
     } catch (e) {
-      print('Error starting chat: $e');
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('チャットの開始に失敗しました'),
-            backgroundColor: Colors.red,
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            _followStatus[user.id] ?? false ? 'フォロー解除に失敗しました' : 'フォローに失敗しました',
           ),
-        );
-      }
+          backgroundColor: Colors.red,
+        ),
+      );
+    } finally {
+      setState(() => _loadingStatus[user.id] = false);
     }
+  }
+
+  void _showUserProfile(AppUser user) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => UserProfileScreen(user: user),
+      ),
+    );
   }
 
   @override
@@ -172,18 +220,36 @@ class _SearchResultScreenState extends State<SearchResultScreen> {
       itemCount: _users.length,
       itemBuilder: (context, index) {
         final user = _users[index];
+        final isFollowing = _followStatus[user.id] ?? false;
+        final isLoading = _loadingStatus[user.id] ?? false;
+
         return ListTile(
           leading: CircleAvatar(
             backgroundImage:
                 user.imageUrl.isNotEmpty ? NetworkImage(user.imageUrl) : null,
             child: user.imageUrl.isEmpty ? const Icon(Icons.person) : null,
           ),
-          title: Text(user.name),
+          title: Text(user.displayName),
           subtitle: Text(user.profile),
-          trailing: IconButton(
-            icon: const Icon(Icons.message),
-            onPressed: () => _startChat(user),
-          ),
+          trailing: isLoading
+              ? const SizedBox(
+                  width: 24,
+                  height: 24,
+                  child: CircularProgressIndicator(strokeWidth: 2),
+                )
+              : ElevatedButton(
+                  onPressed: () => _toggleFollow(user),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: isFollowing ? Colors.grey : Colors.blue,
+                    foregroundColor: Colors.white,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                  ),
+                  child: Text(isFollowing ? 'フォロー中' : 'フォロー'),
+                ),
+          onTap: () => _showUserProfile(user),
         );
       },
     );

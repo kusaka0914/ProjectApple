@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:table_calendar/table_calendar.dart';
+import 'package:intl/intl.dart';
 import '../../models/event.dart';
 import '../event_detail_screen.dart';
 import '../image_picker_screen.dart';
@@ -66,6 +67,11 @@ class _EventTabState extends State<EventTab> {
 
   List<Event> _getEventsForDay(DateTime day) {
     return _events[DateTime(day.year, day.month, day.day)] ?? [];
+  }
+
+  String _formatDate(DateTime date) {
+    final formatter = DateFormat('yyyy年MM月dd日 HH:mm', 'ja_JP');
+    return formatter.format(date);
   }
 
   @override
@@ -156,34 +162,100 @@ class _EventTabState extends State<EventTab> {
       itemCount: events.length,
       itemBuilder: (context, index) {
         final event = events[index];
+        final eventDate = event.date.toDate();
         return Card(
           margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-          child: ListTile(
-            title: Text(event.title),
-            subtitle: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text('参加予定: ${event.participantsCount}人'),
-                if (event.visibleParticipantIds.isNotEmpty)
-                  FutureBuilder<List<String>>(
-                    future: _loadParticipantNames(event.visibleParticipantIds),
-                    builder: (context, snapshot) {
-                      if (!snapshot.hasData) {
-                        return const SizedBox.shrink();
-                      }
-                      return Text('参加者: ${snapshot.data!.join(", ")}');
-                    },
-                  ),
-              ],
-            ),
-            onTap: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (context) => EventDetailScreen(event: event),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Padding(
+                padding: const EdgeInsets.fromLTRB(16, 12, 16, 4),
+                child: Row(
+                  children: [
+                    FutureBuilder<DocumentSnapshot>(
+                      future:
+                          FirebaseFirestore.instance
+                              .collection('users')
+                              .doc(event.userId)
+                              .get(),
+                      builder: (context, snapshot) {
+                        if (!snapshot.hasData) {
+                          return const CircleAvatar(
+                            radius: 16,
+                            child: Icon(Icons.person, size: 20),
+                          );
+                        }
+                        final userData =
+                            snapshot.data!.data() as Map<String, dynamic>?;
+                        return Row(
+                          children: [
+                            CircleAvatar(
+                              radius: 16,
+                              backgroundColor: Colors.grey[200],
+                              child:
+                                  userData?['photoUrl'] != null
+                                      ? ClipOval(
+                                        child: Image.network(
+                                          userData!['photoUrl'],
+                                          width: 32,
+                                          height: 32,
+                                          fit: BoxFit.cover,
+                                          errorBuilder:
+                                              (context, error, stackTrace) =>
+                                                  const Icon(
+                                                    Icons.person,
+                                                    size: 20,
+                                                  ),
+                                        ),
+                                      )
+                                      : const Icon(Icons.person, size: 20),
+                            ),
+                            const SizedBox(width: 8),
+                            Text(
+                              userData?['displayName'] ?? '不明なユーザー',
+                              style: const TextStyle(
+                                fontSize: 14,
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                          ],
+                        );
+                      },
+                    ),
+                  ],
                 ),
-              );
-            },
+              ),
+              ListTile(
+                title: Text(event.title),
+                subtitle: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(_formatDate(eventDate)),
+                    Text('参加予定: ${event.participantsCount}人'),
+                    if (event.visibleParticipantIds.isNotEmpty)
+                      FutureBuilder<List<String>>(
+                        future: _loadParticipantNames(
+                          event.visibleParticipantIds,
+                        ),
+                        builder: (context, snapshot) {
+                          if (!snapshot.hasData) {
+                            return const SizedBox.shrink();
+                          }
+                          return Text('参加者: ${snapshot.data!.join(", ")}');
+                        },
+                      ),
+                  ],
+                ),
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => EventDetailScreen(event: event),
+                    ),
+                  );
+                },
+              ),
+            ],
           ),
         );
       },

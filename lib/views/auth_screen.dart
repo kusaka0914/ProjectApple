@@ -26,15 +26,19 @@ class AuthScreenState extends ConsumerState<AuthScreen> {
   }
 
   Future<void> _initializeUserData(User user) async {
-    final userDoc =
-        await FirebaseFirestore.instance
-            .collection('users')
-            .doc(user.uid)
-            .get();
+    final userDoc = await FirebaseFirestore.instance
+        .collection('users')
+        .doc(user.uid)
+        .get();
+
+    final batch = FirebaseFirestore.instance.batch();
+    final now = DateTime.now();
 
     if (!userDoc.exists) {
-      final now = DateTime.now();
-      await FirebaseFirestore.instance.collection('users').doc(user.uid).set({
+      // ユーザードキュメントの作成
+      final userRef =
+          FirebaseFirestore.instance.collection('users').doc(user.uid);
+      batch.set(userRef, {
         'id': user.uid,
         'displayName': user.email?.split('@')[0] ?? 'ユーザー',
         'email': user.email,
@@ -46,6 +50,51 @@ class AuthScreenState extends ConsumerState<AuthScreen> {
         'createdAt': now,
         'updatedAt': now,
       });
+
+      // オープンチャットの初期化と参加
+      final openChatRef =
+          FirebaseFirestore.instance.collection('messages').doc('open_chat');
+      final openChatDoc = await openChatRef.get();
+
+      if (!openChatDoc.exists) {
+        // オープンチャットが存在しない場合は作成
+        batch.set(openChatRef, {
+          'id': 'open_chat',
+          'type': 'open_chat',
+          'title': 'みんなのチャット',
+          'description': '全員が参加できるオープンチャットです',
+          'lastMessage': '',
+          'lastMessageTime': now,
+          'isRead': true,
+          'participantsCount': 1,
+          'participants': [user.uid],
+        });
+
+        // 参加メッセージを追加
+        final chatRef = openChatRef.collection('chat').doc();
+        batch.set(chatRef, {
+          'type': 'system',
+          'message': '${user.email?.split('@')[0] ?? 'ユーザー'}さんが参加しました',
+          'createdAt': now,
+        });
+      } else {
+        // 既存のオープンチャットに参加
+        batch.update(openChatRef, {
+          'participantsCount': FieldValue.increment(1),
+          'participants': FieldValue.arrayUnion([user.uid]),
+        });
+
+        // 参加メッセージを追加
+        final chatRef = openChatRef.collection('chat').doc();
+        batch.set(chatRef, {
+          'type': 'system',
+          'message': '${user.email?.split('@')[0] ?? 'ユーザー'}さんが参加しました',
+          'createdAt': now,
+        });
+      }
+
+      // バッチ処理を実行
+      await batch.commit();
     }
   }
 
@@ -85,11 +134,11 @@ class AuthScreenState extends ConsumerState<AuthScreen> {
     });
 
     try {
-      final credential = await FirebaseAuth.instance
-          .createUserWithEmailAndPassword(
-            email: _emailController.text.trim(),
-            password: _passwordController.text.trim(),
-          );
+      final credential =
+          await FirebaseAuth.instance.createUserWithEmailAndPassword(
+        email: _emailController.text.trim(),
+        password: _passwordController.text.trim(),
+      );
       if (credential.user != null) {
         await _initializeUserData(credential.user!);
       }
@@ -131,81 +180,69 @@ class AuthScreenState extends ConsumerState<AuthScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return StreamBuilder<User?>(
-      stream: FirebaseAuth.instance.authStateChanges(),
-      builder: (context, snapshot) {
-        if (snapshot.connectionState == ConnectionState.waiting) {
-          return const Scaffold(
-            body: Center(child: CircularProgressIndicator()),
-          );
-        }
-
-        if (snapshot.hasData && snapshot.data != null) {
-          return const HomeScreen();
-        }
-
-        return Scaffold(
-          appBar: AppBar(title: const Text('ログイン')),
-          body: Padding(
-            padding: const EdgeInsets.all(16.0),
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                const Text(
-                  '青森県の観光情報アプリへようこそ！',
-                  style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
-                  textAlign: TextAlign.center,
-                ),
-                const SizedBox(height: 32),
-                TextField(
-                  controller: _emailController,
-                  decoration: const InputDecoration(
-                    labelText: 'メールアドレス',
-                    border: OutlineInputBorder(),
-                  ),
-                  keyboardType: TextInputType.emailAddress,
-                ),
-                const SizedBox(height: 16),
-                TextField(
-                  controller: _passwordController,
-                  decoration: const InputDecoration(
-                    labelText: 'パスワード',
-                    border: OutlineInputBorder(),
-                  ),
-                  obscureText: true,
-                ),
-                if (_errorMessage != null) ...[
-                  const SizedBox(height: 16),
-                  Text(
-                    _errorMessage!,
-                    style: const TextStyle(color: Colors.red),
-                  ),
-                ],
-                const SizedBox(height: 24),
-                if (_isLoading)
-                  const CircularProgressIndicator()
-                else ...[
-                  ElevatedButton(
-                    onPressed: _signIn,
-                    style: ElevatedButton.styleFrom(
-                      minimumSize: const Size.fromHeight(50),
-                    ),
-                    child: const Text('ログイン'),
-                  ),
-                  const SizedBox(height: 16),
-                  OutlinedButton(
-                    onPressed: _signUp,
-                    style: OutlinedButton.styleFrom(
-                      minimumSize: const Size.fromHeight(50),
-                    ),
-                    child: const Text('新規登録'),
-                  ),
-                ],
-              ],
+    return Scaffold(
+      appBar: AppBar(title: const Text('ログイン')),
+      body: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const Text(
+              '青森県の観光情報アプリへようこそ！',
+              style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+              textAlign: TextAlign.center,
             ),
-          ),
-        );
-      },
+            const SizedBox(height: 32),
+            TextField(
+              controller: _emailController,
+              decoration: const InputDecoration(
+                labelText: 'メールアドレス',
+                border: OutlineInputBorder(),
+              ),
+              keyboardType: TextInputType.emailAddress,
+            ),
+            const SizedBox(height: 16),
+            TextField(
+              controller: _passwordController,
+              decoration: const InputDecoration(
+                labelText: 'パスワード',
+                border: OutlineInputBorder(),
+              ),
+              obscureText: true,
+            ),
+            if (_errorMessage != null) ...[
+              const SizedBox(height: 16),
+              Text(
+                _errorMessage!,
+                style: const TextStyle(color: Colors.red),
+              ),
+            ],
+            const SizedBox(height: 24),
+            if (_isLoading)
+              const CircularProgressIndicator()
+            else
+              Column(
+                children: [
+                  SizedBox(
+                    width: double.infinity,
+                    child: FilledButton(
+                      onPressed: _signIn,
+                      child: const Text('ログイン'),
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  SizedBox(
+                    width: double.infinity,
+                    child: OutlinedButton(
+                      onPressed: _signUp,
+                      child: const Text('新規登録'),
+                    ),
+                  ),
+                ],
+              ),
+          ],
+        ),
+      ),
     );
   }
 }
