@@ -17,6 +17,8 @@ class EditProfileScreenState extends State<EditProfileScreen> {
   final _nameController = TextEditingController();
   final _bioController = TextEditingController();
   final _mbtiController = TextEditingController();
+  final _occupationController = TextEditingController();
+  final _universityController = TextEditingController();
   final _favoritePlacesController = TextEditingController();
   final _linksController = TextEditingController();
   bool _isLoading = false;
@@ -35,6 +37,8 @@ class EditProfileScreenState extends State<EditProfileScreen> {
     _nameController.dispose();
     _bioController.dispose();
     _mbtiController.dispose();
+    _occupationController.dispose();
+    _universityController.dispose();
     _favoritePlacesController.dispose();
     _linksController.dispose();
     super.dispose();
@@ -55,6 +59,8 @@ class EditProfileScreenState extends State<EditProfileScreen> {
         _nameController.text = userData.get('displayName') ?? '';
         _bioController.text = userData.get('bio') ?? '';
         _mbtiController.text = userData.get('mbti') ?? '';
+        _occupationController.text = userData.get('occupation') ?? '';
+        _universityController.text = userData.get('university') ?? '';
         _favoritePlacesController.text = userData.get('favoritePlaces') ?? '';
         _links = List<String>.from(userData.get('links') ?? []);
         _imageUrl = userData.get('photoUrl');
@@ -146,6 +152,8 @@ class EditProfileScreenState extends State<EditProfileScreen> {
         'displayName': _nameController.text,
         'bio': _bioController.text,
         'mbti': _mbtiController.text,
+        'occupation': _occupationController.text,
+        'university': _universityController.text,
         'favoritePlaces': _favoritePlacesController.text,
         'links': _links,
         if (photoUrl != null) 'photoUrl': photoUrl,
@@ -252,6 +260,24 @@ class EditProfileScreenState extends State<EditProfileScreen> {
                 labelText: 'MBTI',
                 border: OutlineInputBorder(),
                 hintText: '例: INTJ',
+              ),
+            ),
+            const SizedBox(height: 16),
+            TextFormField(
+              controller: _occupationController,
+              decoration: const InputDecoration(
+                labelText: '職種',
+                border: OutlineInputBorder(),
+                hintText: '例: 学生、薬剤師、建築家など',
+              ),
+            ),
+            const SizedBox(height: 16),
+            TextFormField(
+              controller: _universityController,
+              decoration: const InputDecoration(
+                labelText: '出身・在学大学（任意）',
+                border: OutlineInputBorder(),
+                hintText: '例: 青森大学',
               ),
             ),
             const SizedBox(height: 16),

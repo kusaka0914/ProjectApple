@@ -143,6 +143,8 @@ class ProfileTab extends ConsumerWidget {
         final displayName = userData['displayName'] as String? ?? 'No Name';
         final bio = userData['bio'] as String? ?? '';
         final mbti = userData['mbti'] as String? ?? '';
+        final occupation = userData['occupation'] as String? ?? '';
+        final university = userData['university'] as String? ?? '';
         final favoritePlaces = userData['favoritePlaces'] as String? ?? '';
         final links = List<String>.from(userData['links'] ?? []);
         final postsCount = userData['postsCount'] as int? ?? 0;
@@ -216,6 +218,26 @@ class ProfileTab extends ConsumerWidget {
                               const Icon(Icons.psychology, size: 16),
                               const SizedBox(width: 4),
                               Text('MBTI: $mbti'),
+                            ],
+                          ),
+                        ],
+                        if (occupation.isNotEmpty) ...[
+                          const SizedBox(height: 8),
+                          Row(
+                            children: [
+                              const Icon(Icons.work, size: 16),
+                              const SizedBox(width: 4),
+                              Text('職種: $occupation'),
+                            ],
+                          ),
+                        ],
+                        if (university.isNotEmpty) ...[
+                          const SizedBox(height: 8),
+                          Row(
+                            children: [
+                              const Icon(Icons.school, size: 16),
+                              const SizedBox(width: 4),
+                              Text('大学: $university'),
                             ],
                           ),
                         ],
