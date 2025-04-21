@@ -105,52 +105,98 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
   }
 
   Future<void> _startChat() async {
-    final currentUserId = FirebaseAuth.instance.currentUser?.uid;
-    if (currentUserId == null) return;
-
     try {
-      // 既存のメッセージを検索
-      final existingMessage = await FirebaseFirestore.instance
-          .collection('messages')
-          .where('senderId', whereIn: [currentUserId, widget.user.id]).where(
-              'receiverId',
-              whereIn: [currentUserId, widget.user.id]).get();
+      final currentUserId = FirebaseAuth.instance.currentUser?.uid;
+      if (currentUserId == null) {
+        throw Exception('ログインが必要です');
+      }
 
-      String messageId;
-      if (existingMessage.docs.isNotEmpty) {
-        messageId = existingMessage.docs.first.id;
-      } else {
+      // 自分自身とのチャットを防ぐ
+      if (currentUserId == widget.user.id) {
+        throw Exception('自分自身とチャットを開始することはできません');
+      }
+
+      // participants配列を使用して既存のメッセージを検索
+      final existingMessages = await FirebaseFirestore.instance
+          .collection('messages')
+          .where('participants',
+              arrayContainsAny: [currentUserId, widget.user.id]).get();
+
+      String? messageId;
+      // 両方のユーザーを含むチャットルームを探す
+      for (var doc in existingMessages.docs) {
+        final participants = List<String>.from(doc['participants'] ?? []);
+        if (participants.contains(currentUserId) &&
+            participants.contains(widget.user.id)) {
+          messageId = doc.id;
+          break; // 既存のチャットルームが見つかったらループを抜ける
+        }
+      }
+
+      if (messageId == null) {
         // 新しいメッセージを作成
-        final newMessage =
-            await FirebaseFirestore.instance.collection('messages').add({
-          'senderId': currentUserId,
-          'senderName': FirebaseAuth.instance.currentUser?.displayName ?? '',
-          'senderImageUrl': FirebaseAuth.instance.currentUser?.photoURL ?? '',
-          'receiverId': widget.user.id,
-          'receiverName': widget.user.displayName,
-          'receiverImageUrl': widget.user.imageUrl,
+        final currentUser = await FirebaseFirestore.instance
+            .collection('users')
+            .doc(currentUserId)
+            .get();
+
+        if (!currentUser.exists) {
+          throw Exception('ユーザー情報が見つかりません');
+        }
+
+        final currentUserData = currentUser.data() as Map<String, dynamic>;
+
+        final newMessageRef =
+            FirebaseFirestore.instance.collection('messages').doc();
+        await newMessageRef.set({
+          'participants': [currentUserId, widget.user.id],
+          'participantDetails': {
+            currentUserId: {
+              'id': currentUserId,
+              'displayName': currentUserData['displayName'] ?? '',
+              'photoUrl': currentUserData['photoUrl'] ?? '',
+            },
+            widget.user.id: {
+              'id': widget.user.id,
+              'displayName': widget.user.displayName,
+              'photoUrl': widget.user.imageUrl,
+            },
+          },
           'lastMessage': '',
           'lastMessageTime': FieldValue.serverTimestamp(),
           'isRead': true,
+          'createdAt': FieldValue.serverTimestamp(),
+          'type': 'private',
         });
-        messageId = newMessage.id;
+        messageId = newMessageRef.id;
+
+        // チャットサブコレクションに初期メッセージを作成
+        await newMessageRef.collection('chat').add({
+          'senderId': 'system',
+          'message': 'チャットが開始されました',
+          'createdAt': FieldValue.serverTimestamp(),
+          'type': 'system',
+        });
       }
 
-      if (mounted) {
+      if (mounted && messageId != null) {
         Navigator.push(
           context,
           MaterialPageRoute(
-            builder: (context) => MessageDetailScreen(messageId: messageId),
+            builder: (context) => MessageDetailScreen(messageId: messageId!),
           ),
         );
       }
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('チャットの開始に失敗しました'),
-          backgroundColor: Colors.red,
-        ),
-      );
+      print('Error in _startChat: $e');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(e.toString()),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
     }
   }
 

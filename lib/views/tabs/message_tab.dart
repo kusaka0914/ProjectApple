@@ -15,97 +15,67 @@ class MessageTab extends StatefulWidget {
 class _MessageTabState extends State<MessageTab> {
   bool _isLoading = true;
   bool _hasError = false;
-  StreamSubscription<QuerySnapshot>? _subscription;
-  final String openChatId = 'open_chat'; // オープンチャット用の固定ID
+  final String openChatId = 'open_chat';
 
   @override
   void initState() {
     super.initState();
-    _startListening();
     _ensureOpenChatExists();
+    _migrateExistingMessages();
   }
 
-  // オープンチャットのドキュメントが存在することを確認
   Future<void> _ensureOpenChatExists() async {
-    final openChatRef =
-        FirebaseFirestore.instance.collection('messages').doc(openChatId);
-    final doc = await openChatRef.get();
+    try {
+      final openChatRef =
+          FirebaseFirestore.instance.collection('messages').doc(openChatId);
+      final doc = await openChatRef.get();
 
-    if (!doc.exists) {
-      await openChatRef.set({
-        'id': openChatId,
-        'type': 'open_chat',
-        'title': 'みんなのチャット',
-        'description': '全員が参加できるオープンチャットです',
-        'lastMessage': '',
-        'lastMessageTime': FieldValue.serverTimestamp(),
-        'isRead': true,
-        'participantsCount': 0,
-      });
+      if (!doc.exists) {
+        await openChatRef.set({
+          'id': openChatId,
+          'type': 'open_chat',
+          'title': 'みんなのチャット',
+          'description': '全員が参加できるオープンチャットです',
+          'lastMessage': '',
+          'lastMessageTime': FieldValue.serverTimestamp(),
+          'isRead': true,
+          'participantsCount': 0,
+        });
+      }
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+      }
+    } catch (e) {
+      print('Error ensuring open chat exists: $e');
+      if (mounted) {
+        setState(() {
+          _hasError = true;
+          _isLoading = false;
+        });
+      }
     }
   }
 
-  @override
-  void dispose() {
-    _subscription?.cancel();
-    super.dispose();
-  }
+  Future<void> _migrateExistingMessages() async {
+    try {
+      final currentUserId = FirebaseAuth.instance.currentUser?.uid;
+      if (currentUserId == null) return;
 
-  void _startListening() {
-    setState(() {
-      _isLoading = true;
-      _hasError = false;
-    });
+      final messages = await FirebaseFirestore.instance
+          .collection('messages')
+          .where('type', isNull: true)
+          .get();
 
-    final currentUserId = FirebaseAuth.instance.currentUser?.uid;
-    if (currentUserId == null) return;
-
-    // 3秒のタイムアウトを設定
-    Timer(const Duration(seconds: 3), () {
-      if (_isLoading && mounted) {
-        setState(() {
-          _isLoading = false;
-          _hasError = true;
-        });
-        _subscription?.cancel();
+      final batch = FirebaseFirestore.instance.batch();
+      for (var doc in messages.docs) {
+        batch.update(doc.reference, {'type': 'private'});
       }
-    });
-
-    _subscription = FirebaseFirestore.instance
-        .collection('messages')
-        .where(
-          Filter.or(
-            Filter.and(
-              Filter('senderId', isEqualTo: currentUserId),
-              Filter('lastMessage', isNotEqualTo: ''),
-            ),
-            Filter.and(
-              Filter('receiverId', isEqualTo: currentUserId),
-              Filter('lastMessage', isNotEqualTo: ''),
-            ),
-          ),
-        )
-        .orderBy('lastMessageTime', descending: true)
-        .snapshots()
-        .listen(
-      (snapshot) {
-        if (mounted) {
-          setState(() {
-            _isLoading = false;
-            _hasError = false;
-          });
-        }
-      },
-      onError: (error) {
-        if (mounted) {
-          setState(() {
-            _isLoading = false;
-            _hasError = true;
-          });
-          print('Error in message tab: $error');
-        }
-      },
-    );
+      await batch.commit();
+    } catch (e) {
+      print('Error migrating messages: $e');
+    }
   }
 
   @override
@@ -125,125 +95,185 @@ class _MessageTabState extends State<MessageTab> {
         else if (_hasError)
           SliverFillRemaining(
             child: Center(
-              child: Padding(
-                padding: const EdgeInsets.all(32),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    const Icon(
-                      Icons.error_outline,
-                      size: 48,
-                      color: Colors.red,
-                    ),
-                    const SizedBox(height: 16),
-                    const Text(
-                      'メッセージの読み込みに失敗しました',
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    const SizedBox(height: 16),
-                    ElevatedButton.icon(
-                      onPressed: _startListening,
-                      icon: const Icon(Icons.refresh),
-                      label: const Text('再読み込み'),
-                    ),
-                  ],
-                ),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Icon(Icons.error_outline, size: 48, color: Colors.red),
+                  const SizedBox(height: 16),
+                  const Text(
+                    'メッセージの読み込みに失敗しました',
+                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                  ),
+                  const SizedBox(height: 16),
+                  ElevatedButton.icon(
+                    onPressed: _ensureOpenChatExists,
+                    icon: const Icon(Icons.refresh),
+                    label: const Text('再読み込み'),
+                  ),
+                ],
               ),
             ),
           )
-        else
+        else ...[
+          // オープンチャット
           SliverToBoxAdapter(
             child: Padding(
-              padding: const EdgeInsets.all(16.0),
-              child: Card(
-                child: ListTile(
-                  leading: const CircleAvatar(
-                    child: Icon(Icons.groups),
+              padding: const EdgeInsets.symmetric(horizontal: 16.0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Padding(
+                    padding: EdgeInsets.symmetric(vertical: 8.0),
+                    child: Text(
+                      'オープンチャット',
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.grey,
+                      ),
+                    ),
                   ),
-                  title: const Text('みんなのチャット'),
-                  subtitle: const Text('全員が参加できるオープンチャットです'),
-                  trailing: StreamBuilder<DocumentSnapshot>(
+                  StreamBuilder<DocumentSnapshot>(
                     stream: FirebaseFirestore.instance
                         .collection('messages')
                         .doc(openChatId)
                         .snapshots(),
                     builder: (context, snapshot) {
-                      if (!snapshot.hasData) return const SizedBox.shrink();
+                      if (!snapshot.hasData) {
+                        return const SizedBox.shrink();
+                      }
+
                       final data =
                           snapshot.data!.data() as Map<String, dynamic>?;
-                      if (data == null) return const SizedBox.shrink();
+                      if (data == null) {
+                        return const SizedBox.shrink();
+                      }
 
                       final lastMessageTime =
                           (data['lastMessageTime'] as Timestamp?)?.toDate();
-                      return Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        crossAxisAlignment: CrossAxisAlignment.end,
-                        children: [
-                          if (lastMessageTime != null)
-                            Text(
-                              _formatDateTime(lastMessageTime),
-                              style: const TextStyle(
-                                  fontSize: 12, color: Colors.grey),
+                      final lastMessage = data['lastMessage'] as String? ?? '';
+                      final participantsCount =
+                          data['participantsCount'] as int? ?? 0;
+
+                      return Card(
+                        elevation: 0,
+                        margin: const EdgeInsets.only(bottom: 8.0),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                          side: BorderSide(color: Colors.grey.shade200),
+                        ),
+                        child: ListTile(
+                          contentPadding: const EdgeInsets.symmetric(
+                            horizontal: 16,
+                            vertical: 8,
+                          ),
+                          leading: const CircleAvatar(
+                            backgroundColor: Colors.blue,
+                            child: Icon(
+                              Icons.groups,
+                              color: Colors.white,
                             ),
-                        ],
+                          ),
+                          title: Row(
+                            children: [
+                              const Text('みんなのチャット'),
+                              const SizedBox(width: 8),
+                              Container(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 8,
+                                  vertical: 2,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: Colors.blue.shade50,
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                                child: Text(
+                                  '$participantsCount人',
+                                  style: TextStyle(
+                                    fontSize: 12,
+                                    color: Colors.blue.shade700,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                          subtitle: lastMessage.isNotEmpty
+                              ? Text(
+                                  lastMessage,
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                )
+                              : const Text(
+                                  'メッセージはありません',
+                                  style: TextStyle(
+                                    color: Colors.grey,
+                                    fontStyle: FontStyle.italic,
+                                  ),
+                                ),
+                          trailing: lastMessageTime != null
+                              ? Text(
+                                  _formatDateTime(lastMessageTime),
+                                  style: const TextStyle(
+                                    fontSize: 12,
+                                    color: Colors.grey,
+                                  ),
+                                )
+                              : null,
+                          onTap: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => MessageDetailScreen(
+                                  messageId: openChatId,
+                                  isOpenChat: true,
+                                ),
+                              ),
+                            );
+                          },
+                        ),
                       );
                     },
                   ),
-                  onTap: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => MessageDetailScreen(
-                          messageId: openChatId,
-                          isOpenChat: true,
+                  if (!_isLoading && !_hasError)
+                    const Padding(
+                      padding: EdgeInsets.symmetric(vertical: 8.0),
+                      child: Text(
+                        'プライベートメッセージ',
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.grey,
                         ),
                       ),
-                    );
-                  },
-                ),
+                    ),
+                ],
               ),
             ),
           ),
-        // 既存のメッセージリスト
-        StreamBuilder<QuerySnapshot>(
-          stream: FirebaseFirestore.instance
-              .collection('messages')
-              .where(
-                Filter.or(
-                  Filter.and(
-                    Filter('senderId', isEqualTo: currentUserId),
-                    Filter('lastMessage', isNotEqualTo: ''),
-                  ),
-                  Filter.and(
-                    Filter('receiverId', isEqualTo: currentUserId),
-                    Filter('lastMessage', isNotEqualTo: ''),
-                  ),
-                ),
-              )
-              .where('type', isNotEqualTo: 'open_chat') // オープンチャット以外のメッセージを取得
-              .orderBy('type', descending: true) // type フィールドのorderByを追加
-              .orderBy('lastMessageTime', descending: true)
-              .snapshots(),
-          builder: (context, snapshot) {
-            if (snapshot.hasError) {
-              return SliverFillRemaining(
-                child: Center(child: Text('エラーが発生しました: ${snapshot.error}')),
-              );
-            }
 
-            final messages = snapshot.data?.docs
-                    .map((doc) => Message.fromFirestore(doc))
-                    .toList() ??
-                [];
+          // プライベートメッセージ
+          StreamBuilder<List<Message>>(
+            stream: _getMessagesStream(currentUserId),
+            builder: (context, snapshot) {
+              if (snapshot.hasError) {
+                print('Error in message stream: ${snapshot.error}');
+                return SliverToBoxAdapter(
+                  child: Center(child: Text('エラーが発生しました: ${snapshot.error}')),
+                );
+              }
 
-            if (messages.isEmpty) {
-              return const SliverFillRemaining(
-                child: Center(
-                  child: Padding(
-                    padding: EdgeInsets.all(32),
+              if (snapshot.connectionState == ConnectionState.waiting) {
+                return const SliverToBoxAdapter(
+                  child: Center(child: CircularProgressIndicator()),
+                );
+              }
+
+              final messages = snapshot.data ?? [];
+
+              if (messages.isEmpty) {
+                return const SliverFillRemaining(
+                  hasScrollBody: false,
+                  child: Center(
                     child: Column(
                       mainAxisSize: MainAxisSize.min,
                       children: [
@@ -269,23 +299,59 @@ class _MessageTabState extends State<MessageTab> {
                       ],
                     ),
                   ),
+                );
+              }
+
+              return SliverList(
+                delegate: SliverChildBuilderDelegate(
+                  (context, index) {
+                    final message = messages[index];
+                    return MessageListTile(message: message);
+                  },
+                  childCount: messages.length,
                 ),
               );
-            }
-
-            return SliverList(
-              delegate: SliverChildBuilderDelegate(
-                (context, index) {
-                  final message = messages[index];
-                  return MessageListTile(message: message);
-                },
-                childCount: messages.length,
-              ),
-            );
-          },
-        ),
+            },
+          ),
+        ],
       ],
     );
+  }
+
+  Stream<List<Message>> _getMessagesStream(String currentUserId) {
+    print('Fetching messages for user: $currentUserId');
+    return FirebaseFirestore.instance
+        .collection('messages')
+        .orderBy('lastMessageTime', descending: true)
+        .snapshots()
+        .asyncMap((snapshot) async {
+      print('Total documents in snapshot: ${snapshot.docs.length}');
+      final messages = <Message>[];
+      for (var doc in snapshot.docs) {
+        final data = doc.data();
+        print('Processing document ${doc.id}:');
+        print('- type: ${data['type']}');
+        print('- participants: ${data['participants']}');
+
+        // オープンチャット以外かつ、自分が参加者に含まれているメッセージを取得
+        if (data['type'] != 'open_chat') {
+          final participants = List<String>.from(data['participants'] ?? []);
+          if (participants.contains(currentUserId)) {
+            try {
+              final message = Message.fromFirestore(doc);
+              messages.add(message);
+              print('Added message ${doc.id} to list');
+            } catch (e) {
+              print('Error parsing message ${doc.id}: $e');
+            }
+          }
+        }
+      }
+
+      print('Final message count: ${messages.length}');
+      messages.sort((a, b) => b.lastMessageTime.compareTo(a.lastMessageTime));
+      return messages;
+    });
   }
 
   String _formatDateTime(DateTime dateTime) {
@@ -309,14 +375,18 @@ class MessageListTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final currentUserId = FirebaseAuth.instance.currentUser?.uid;
+    final isReceiver = message.receiverId == currentUserId;
+    final displayName = isReceiver ? message.senderName : message.receiverName;
+    final imageUrl =
+        isReceiver ? message.senderImageUrl : message.receiverImageUrl;
+
     return ListTile(
       leading: CircleAvatar(
-        backgroundImage: message.senderImageUrl.isNotEmpty
-            ? NetworkImage(message.senderImageUrl)
-            : null,
-        child: message.senderImageUrl.isEmpty ? const Icon(Icons.person) : null,
+        backgroundImage: imageUrl.isNotEmpty ? NetworkImage(imageUrl) : null,
+        child: imageUrl.isEmpty ? const Icon(Icons.person) : null,
       ),
-      title: Text(message.senderName),
+      title: Text(displayName),
       subtitle: Text(
         message.lastMessage,
         maxLines: 1,
@@ -330,7 +400,7 @@ class MessageListTile extends StatelessWidget {
             _formatDateTime(message.lastMessageTime),
             style: const TextStyle(fontSize: 12, color: Colors.grey),
           ),
-          if (!message.isRead)
+          if (!message.isRead && message.receiverId == currentUserId)
             Container(
               margin: const EdgeInsets.only(top: 4),
               width: 10,
