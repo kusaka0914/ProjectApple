@@ -3,6 +3,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:table_calendar/table_calendar.dart';
 import '../../models/event.dart';
 import '../event_detail_screen.dart';
+import '../image_picker_screen.dart';
 
 class EventTab extends StatefulWidget {
   const EventTab({super.key});
@@ -23,30 +24,33 @@ class _EventTabState extends State<EventTab> {
   }
 
   Future<void> _loadEvents() async {
+    print('Loading events for month: ${_focusedDay.month}');
     final eventsSnapshot =
         await FirebaseFirestore.instance
             .collection('events')
             .where(
               'date',
-              isGreaterThanOrEqualTo: DateTime(
-                _focusedDay.year,
-                _focusedDay.month,
-                1,
+              isGreaterThanOrEqualTo: Timestamp.fromDate(
+                DateTime(_focusedDay.year, _focusedDay.month, 1),
               ),
             )
             .where(
               'date',
-              isLessThan: DateTime(_focusedDay.year, _focusedDay.month + 1, 1),
+              isLessThan: Timestamp.fromDate(
+                DateTime(_focusedDay.year, _focusedDay.month + 1, 1),
+              ),
             )
             .get();
 
+    print('Found ${eventsSnapshot.docs.length} events');
     final newEvents = <DateTime, List<Event>>{};
     for (var doc in eventsSnapshot.docs) {
       final event = Event.fromFirestore(doc);
+      print('Processing event: ${event.title} on ${event.date}');
       final eventDate = DateTime(
-        event.date.year,
-        event.date.month,
-        event.date.day,
+        event.date.toDate().year,
+        event.date.toDate().month,
+        event.date.toDate().day,
       );
       if (newEvents[eventDate] == null) {
         newEvents[eventDate] = [];
@@ -57,6 +61,7 @@ class _EventTabState extends State<EventTab> {
     setState(() {
       _events = newEvents;
     });
+    print('Events loaded: $_events');
   }
 
   List<Event> _getEventsForDay(DateTime day) {
@@ -65,40 +70,80 @@ class _EventTabState extends State<EventTab> {
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      children: [
-        TableCalendar(
-          firstDay: DateTime.utc(2024, 1, 1),
-          lastDay: DateTime.utc(2025, 12, 31),
-          focusedDay: _focusedDay,
-          selectedDayPredicate: (day) => isSameDay(_selectedDay, day),
-          onDaySelected: (selectedDay, focusedDay) {
-            setState(() {
-              _selectedDay = selectedDay;
+    return Scaffold(
+      body: Column(
+        children: [
+          const SizedBox(height: 48),
+          TableCalendar(
+            firstDay: DateTime.utc(2024, 1, 1),
+            lastDay: DateTime.utc(2025, 12, 31),
+            focusedDay: _focusedDay,
+            selectedDayPredicate: (day) => isSameDay(_selectedDay, day),
+            onDaySelected: (selectedDay, focusedDay) {
+              setState(() {
+                _selectedDay = selectedDay;
+                _focusedDay = focusedDay;
+              });
+            },
+            onPageChanged: (focusedDay) {
               _focusedDay = focusedDay;
-            });
-          },
-          onPageChanged: (focusedDay) {
-            _focusedDay = focusedDay;
-            _loadEvents();
-          },
-          eventLoader: _getEventsForDay,
-          calendarStyle: const CalendarStyle(
-            markersMaxCount: 1,
-            markerDecoration: BoxDecoration(
-              color: Colors.blue,
-              shape: BoxShape.circle,
+              _loadEvents();
+            },
+            eventLoader: _getEventsForDay,
+            calendarStyle: CalendarStyle(
+              markersMaxCount: 1,
+              markerDecoration: BoxDecoration(
+                color: Colors.blue,
+                shape: BoxShape.circle,
+              ),
+              markerSize: 8,
+              selectedDecoration: BoxDecoration(
+                color: Colors.blue,
+                shape: BoxShape.circle,
+              ),
+              todayDecoration: BoxDecoration(
+                color: Colors.blue.withOpacity(0.3),
+                shape: BoxShape.circle,
+              ),
+              markersAlignment: Alignment.bottomCenter,
+              markerMargin: EdgeInsets.only(top: 8),
+            ),
+            calendarBuilders: CalendarBuilders(
+              markerBuilder: (context, date, events) {
+                if (events.isEmpty) return null;
+                return Container(
+                  margin: const EdgeInsets.only(top: 20),
+                  padding: const EdgeInsets.all(1),
+                  child: Container(
+                    width: 8,
+                    height: 8,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: Colors.blue,
+                    ),
+                  ),
+                );
+              },
             ),
           ),
-        ),
-        const Divider(),
-        Expanded(
-          child:
-              _selectedDay == null
-                  ? const Center(child: Text('日付を選択してください'))
-                  : _buildEventList(_getEventsForDay(_selectedDay!)),
-        ),
-      ],
+          const Divider(),
+          Expanded(
+            child:
+                _selectedDay == null
+                    ? const Center(child: Text('日付を選択してください'))
+                    : _buildEventList(_getEventsForDay(_selectedDay!)),
+          ),
+        ],
+      ),
+      floatingActionButton: FloatingActionButton(
+        onPressed: () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(builder: (context) => const ImagePickerScreen()),
+          );
+        },
+        child: const Icon(Icons.add),
+      ),
     );
   }
 

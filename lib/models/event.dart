@@ -4,45 +4,45 @@ class Event {
   final String id;
   final String title;
   final String description;
-  final DateTime date;
-  final String location;
-  final String organizerId;
+  final Timestamp date;
+  final String imageUrl;
+  final String userId;
+  final Timestamp createdAt;
   final int participantsCount;
-  final List<String> participantIds;
   final List<String> visibleParticipantIds;
-  final DateTime createdAt;
-  final DateTime updatedAt;
+  final List<String> participantIds;
+  final String location;
 
   Event({
     required this.id,
     required this.title,
     required this.description,
     required this.date,
-    required this.location,
-    required this.organizerId,
-    required this.participantsCount,
-    required this.participantIds,
-    required this.visibleParticipantIds,
+    required this.imageUrl,
+    required this.userId,
     required this.createdAt,
-    required this.updatedAt,
+    this.participantsCount = 0,
+    this.visibleParticipantIds = const [],
+    this.participantIds = const [],
+    this.location = '',
   });
 
   factory Event.fromFirestore(DocumentSnapshot doc) {
-    final data = doc.data() as Map<String, dynamic>;
+    Map<String, dynamic> data = doc.data() as Map<String, dynamic>;
     return Event(
       id: doc.id,
       title: data['title'] ?? '',
       description: data['description'] ?? '',
-      date: (data['date'] as Timestamp).toDate(),
-      location: data['location'] ?? '',
-      organizerId: data['organizerId'] ?? '',
+      date: data['date'] as Timestamp,
+      imageUrl: data['imageUrl'] ?? '',
+      userId: data['userId'] ?? '',
+      createdAt: data['createdAt'] as Timestamp,
       participantsCount: data['participantsCount'] ?? 0,
-      participantIds: List<String>.from(data['participantIds'] ?? []),
       visibleParticipantIds: List<String>.from(
         data['visibleParticipantIds'] ?? [],
       ),
-      createdAt: (data['createdAt'] as Timestamp).toDate(),
-      updatedAt: (data['updatedAt'] as Timestamp).toDate(),
+      participantIds: List<String>.from(data['participantIds'] ?? []),
+      location: data['location'] ?? '',
     );
   }
 
@@ -50,14 +50,14 @@ class Event {
     return {
       'title': title,
       'description': description,
-      'date': Timestamp.fromDate(date),
-      'location': location,
-      'organizerId': organizerId,
+      'date': date,
+      'imageUrl': imageUrl,
+      'userId': userId,
+      'createdAt': createdAt,
       'participantsCount': participantsCount,
-      'participantIds': participantIds,
       'visibleParticipantIds': visibleParticipantIds,
-      'createdAt': Timestamp.fromDate(createdAt),
-      'updatedAt': Timestamp.fromDate(updatedAt),
+      'participantIds': participantIds,
+      'location': location,
     };
   }
 }

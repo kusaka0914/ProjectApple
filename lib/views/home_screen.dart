@@ -70,10 +70,13 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
           ),
         ],
       ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: _showPostImagePickerScreen,
-        child: const Icon(Icons.add),
-      ),
+      floatingActionButton:
+          _currentIndex != 1
+              ? FloatingActionButton(
+                onPressed: _showPostImagePickerScreen,
+                child: const Icon(Icons.add),
+              )
+              : null,
     );
   }
 }
