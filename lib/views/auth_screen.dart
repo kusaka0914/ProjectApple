@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../services/auth_service.dart';
 import 'home_screen.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
 class AuthScreen extends ConsumerStatefulWidget {
   const AuthScreen({super.key});
@@ -24,6 +25,30 @@ class AuthScreenState extends ConsumerState<AuthScreen> {
     super.dispose();
   }
 
+  Future<void> _initializeUserData(User user) async {
+    final userDoc =
+        await FirebaseFirestore.instance
+            .collection('users')
+            .doc(user.uid)
+            .get();
+
+    if (!userDoc.exists) {
+      final now = DateTime.now();
+      await FirebaseFirestore.instance.collection('users').doc(user.uid).set({
+        'id': user.uid,
+        'displayName': user.email?.split('@')[0] ?? 'ユーザー',
+        'email': user.email,
+        'photoUrl': null,
+        'bio': '',
+        'postsCount': 0,
+        'followersCount': 0,
+        'followingCount': 0,
+        'createdAt': now,
+        'updatedAt': now,
+      });
+    }
+  }
+
   Future<void> _signIn() async {
     setState(() {
       _isLoading = true;
@@ -31,10 +56,13 @@ class AuthScreenState extends ConsumerState<AuthScreen> {
     });
 
     try {
-      await FirebaseAuth.instance.signInWithEmailAndPassword(
+      final credential = await FirebaseAuth.instance.signInWithEmailAndPassword(
         email: _emailController.text.trim(),
         password: _passwordController.text.trim(),
       );
+      if (credential.user != null) {
+        await _initializeUserData(credential.user!);
+      }
     } on FirebaseAuthException catch (e) {
       setState(() {
         _errorMessage = _getErrorMessage(e.code);
@@ -57,10 +85,14 @@ class AuthScreenState extends ConsumerState<AuthScreen> {
     });
 
     try {
-      await FirebaseAuth.instance.createUserWithEmailAndPassword(
-        email: _emailController.text.trim(),
-        password: _passwordController.text.trim(),
-      );
+      final credential = await FirebaseAuth.instance
+          .createUserWithEmailAndPassword(
+            email: _emailController.text.trim(),
+            password: _passwordController.text.trim(),
+          );
+      if (credential.user != null) {
+        await _initializeUserData(credential.user!);
+      }
     } on FirebaseAuthException catch (e) {
       setState(() {
         _errorMessage = _getErrorMessage(e.code);

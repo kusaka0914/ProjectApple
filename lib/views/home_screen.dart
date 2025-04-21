@@ -4,6 +4,7 @@ import 'tabs/feed_tab.dart';
 import 'tabs/map_tab.dart';
 import 'tabs/search_tab.dart';
 import 'tabs/profile_tab.dart';
+import 'posts/post_image_picker_screen.dart';
 
 class HomeScreen extends ConsumerStatefulWidget {
   const HomeScreen({super.key});
@@ -21,6 +22,12 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     const SearchTab(),
     const ProfileTab(),
   ];
+
+  void _showPostImagePickerScreen() {
+    Navigator.of(context).push(
+      MaterialPageRoute(builder: (context) => const PostImagePickerScreen()),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -57,9 +64,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
         ],
       ),
       floatingActionButton: FloatingActionButton(
-        onPressed: () {
-          // TODO: 投稿作成画面に遷移
-        },
+        onPressed: _showPostImagePickerScreen,
         child: const Icon(Icons.add),
       ),
     );
