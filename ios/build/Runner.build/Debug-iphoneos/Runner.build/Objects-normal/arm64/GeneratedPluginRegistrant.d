@@ -1,0 +1,21 @@
+dependencies: \
+  /Users/kusakatakumi/Desktop/project-apple/firebase_sample_app/ios/Runner/GeneratedPluginRegistrant.m \
+  /Users/kusakatakumi/Desktop/project-apple/firebase_sample_app/ios/Runner/GeneratedPluginRegistrant.h \
+  /Users/kusakatakumi/Desktop/project-apple/firebase_sample_app/ios/build/Debug-iphoneos/Flutter.framework/Modules/module.modulemap \
+  /Users/kusakatakumi/Desktop/project-apple/firebase_sample_app/ios/build/Debug-iphoneos/Flutter.framework/Headers/Flutter.h \
+  /Users/kusakatakumi/Desktop/project-apple/firebase_sample_app/ios/build/Debug-iphoneos/Flutter.framework/Headers/FlutterAppDelegate.h \
+  /Users/kusakatakumi/Desktop/project-apple/firebase_sample_app/ios/build/Debug-iphoneos/Flutter.framework/Headers/FlutterMacros.h \
+  /Users/kusakatakumi/Desktop/project-apple/firebase_sample_app/ios/build/Debug-iphoneos/Flutter.framework/Headers/FlutterPlugin.h \
+  /Users/kusakatakumi/Desktop/project-apple/firebase_sample_app/ios/build/Debug-iphoneos/Flutter.framework/Headers/FlutterBinaryMessenger.h \
+  /Users/kusakatakumi/Desktop/project-apple/firebase_sample_app/ios/build/Debug-iphoneos/Flutter.framework/Headers/FlutterChannels.h \
+  /Users/kusakatakumi/Desktop/project-apple/firebase_sample_app/ios/build/Debug-iphoneos/Flutter.framework/Headers/FlutterCodecs.h \
+  /Users/kusakatakumi/Desktop/project-apple/firebase_sample_app/ios/build/Debug-iphoneos/Flutter.framework/Headers/FlutterPlatformViews.h \
+  /Users/kusakatakumi/Desktop/project-apple/firebase_sample_app/ios/build/Debug-iphoneos/Flutter.framework/Headers/FlutterTexture.h \
+  /Users/kusakatakumi/Desktop/project-apple/firebase_sample_app/ios/build/Debug-iphoneos/Flutter.framework/Headers/FlutterCallbackCache.h \
+  /Users/kusakatakumi/Desktop/project-apple/firebase_sample_app/ios/build/Debug-iphoneos/Flutter.framework/Headers/FlutterDartProject.h \
+  /Users/kusakatakumi/Desktop/project-apple/firebase_sample_app/ios/build/Debug-iphoneos/Flutter.framework/Headers/FlutterEngine.h \
+  /Users/kusakatakumi/Desktop/project-apple/firebase_sample_app/ios/build/Debug-iphoneos/Flutter.framework/Headers/FlutterEngineGroup.h \
+  /Users/kusakatakumi/Desktop/project-apple/firebase_sample_app/ios/build/Debug-iphoneos/Flutter.framework/Headers/FlutterHeadlessDartRunner.h \
+  /Users/kusakatakumi/Desktop/project-apple/firebase_sample_app/ios/build/Debug-iphoneos/Flutter.framework/Headers/FlutterPluginAppLifeCycleDelegate.h \
+  /Users/kusakatakumi/Desktop/project-apple/firebase_sample_app/ios/build/Debug-iphoneos/Flutter.framework/Headers/FlutterViewController.h \
+  /Users/kusakatakumi/Desktop/project-apple/firebase_sample_app/ios/build/Debug-iphoneos/Flutter.framework/Headers/FlutterHourFormat.h

@@ -1,0 +1,1 @@
+{"flutter":{"platforms":{"ios":{"default":{"projectId":"profect-apple","appId":"1:555938641338:ios:46a8f6900f86386cf61983","uploadDebugSymbols":false,"fileOutput":"ios/Runner/GoogleService-Info.plist"}},"dart":{"lib/firebase_options.dart":{"projectId":"profect-apple","configurations":{"ios":"1:555938641338:ios:46a8f6900f86386cf61983"}}}}}}
