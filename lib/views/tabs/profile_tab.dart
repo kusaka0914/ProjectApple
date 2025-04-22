@@ -10,6 +10,7 @@ import 'package:path_provider/path_provider.dart';
 import 'package:path/path.dart' as path;
 import 'package:url_launcher/url_launcher.dart';
 import '../auth_screen.dart';
+import '../follow_list_screen.dart';
 
 class ProfileTab extends ConsumerStatefulWidget {
   const ProfileTab({super.key});
@@ -67,9 +68,11 @@ class _ProfileTabState extends ConsumerState<ProfileTab> {
     final user = FirebaseAuth.instance.currentUser;
     if (user == null) return;
 
+    final username = user.email?.split('@')[0] ?? 'ユーザー';
     await FirebaseFirestore.instance.collection('users').doc(userId).set({
       'id': userId,
-      'displayName': user.email?.split('@')[0] ?? 'ユーザー',
+      'username': username,
+      'nickname': username,
       'email': user.email,
       'photoUrl': null,
       'bio': '',
@@ -193,16 +196,25 @@ class _ProfileTabState extends ConsumerState<ProfileTab> {
           .snapshots(),
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
-          return const Center(child: CircularProgressIndicator());
+          return const Center(
+            child: CircularProgressIndicator(
+              color: Color(0xFF00F7FF),
+            ),
+          );
         }
 
         if (!snapshot.hasData || !snapshot.data!.exists) {
           _createUserProfile(user.uid);
-          return const Center(child: CircularProgressIndicator());
+          return const Center(
+            child: CircularProgressIndicator(
+              color: Color(0xFF00F7FF),
+            ),
+          );
         }
 
         final userData = snapshot.data!.data() as Map<String, dynamic>;
-        final displayName = userData['displayName'] as String? ?? 'No Name';
+        final username = userData['username'] as String? ?? 'No Name';
+        final nickname = userData['nickname'] as String? ?? username;
         final bio = userData['bio'] as String? ?? '';
         final mbti = userData['mbti'] as String? ?? '';
         final occupation = userData['occupation'] as String? ?? '';
@@ -214,169 +226,319 @@ class _ProfileTabState extends ConsumerState<ProfileTab> {
         final followingCount = userData['followingCount'] as int? ?? 0;
         final photoUrl = userData['photoUrl'] as String?;
 
-        return CustomScrollView(
-          slivers: [
-            SliverAppBar(
-              floating: true,
-              title: const Text('プロフィール'),
-              actions: [
-                IconButton(
-                  icon: const Icon(Icons.settings),
-                  onPressed: () => _showSettingsMenu(context),
-                ),
+        return Container(
+          decoration: const BoxDecoration(
+            gradient: LinearGradient(
+              begin: Alignment.topCenter,
+              end: Alignment.bottomCenter,
+              colors: [
+                Color(0xFF0B1221), // ダークネイビー
+                Color(0xFF1A1B3F), // ダークブルー
+                Color(0xFF0B1221), // ダークネイビー
               ],
             ),
-            SliverToBoxAdapter(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Padding(
-                    padding: const EdgeInsets.all(16),
-                    child: Row(
-                      children: [
-                        CircleAvatar(
-                          radius: 40,
-                          backgroundImage: photoUrl != null
-                              ? NetworkImage(photoUrl) as ImageProvider
-                              : const AssetImage(
-                                  'assets/default_profile.png',
-                                ),
-                        ),
-                        const SizedBox(width: 24),
-                        Expanded(
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                            children: [
-                              _buildStatColumn('投稿', postsCount),
-                              _buildStatColumn('フォロワー', followersCount),
-                              _buildStatColumn('フォロー中', followingCount),
+          ),
+          child: CustomScrollView(
+            slivers: [
+              SliverAppBar(
+                expandedHeight: 200,
+                floating: false,
+                pinned: true,
+                stretch: true,
+                backgroundColor: Colors.transparent,
+                automaticallyImplyLeading: false,
+                toolbarHeight: 56,
+                collapsedHeight: 56,
+                flexibleSpace: FlexibleSpaceBar(
+                  stretchModes: const [
+                    StretchMode.zoomBackground,
+                    StretchMode.blurBackground,
+                  ],
+                  background: Stack(
+                    fit: StackFit.expand,
+                    children: [
+                      Container(
+                        decoration: const BoxDecoration(
+                          gradient: LinearGradient(
+                            begin: Alignment.topLeft,
+                            end: Alignment.bottomRight,
+                            colors: [
+                              Color(0xFF00F7FF), // ネオンシアン
+                              Color(0xFF0B1221), // ダークネイビー
                             ],
                           ),
                         ),
-                      ],
-                    ),
-                  ),
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 16),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          displayName,
-                          style: const TextStyle(
-                            fontWeight: FontWeight.bold,
-                            fontSize: 16,
-                          ),
-                        ),
-                        if (bio.isNotEmpty) ...[
-                          const SizedBox(height: 4),
-                          Text(bio),
-                        ],
-                        if (mbti.isNotEmpty) ...[
-                          const SizedBox(height: 8),
-                          Row(
-                            children: [
-                              const Icon(Icons.psychology, size: 16),
-                              const SizedBox(width: 4),
-                              Text('MBTI: $mbti'),
-                            ],
-                          ),
-                        ],
-                        if (occupation.isNotEmpty) ...[
-                          const SizedBox(height: 8),
-                          Row(
-                            children: [
-                              const Icon(Icons.work, size: 16),
-                              const SizedBox(width: 4),
-                              Text('職種: $occupation'),
-                            ],
-                          ),
-                        ],
-                        if (university.isNotEmpty) ...[
-                          const SizedBox(height: 8),
-                          Row(
-                            children: [
-                              const Icon(Icons.school, size: 16),
-                              const SizedBox(width: 4),
-                              Text('大学: $university'),
-                            ],
-                          ),
-                        ],
-                        if (favoritePlaces.isNotEmpty) ...[
-                          const SizedBox(height: 8),
-                          Row(
-                            children: [
-                              const Icon(Icons.favorite, size: 16),
-                              const SizedBox(width: 4),
-                              Expanded(
-                                child: Text('好きなお店・企業: $favoritePlaces'),
-                              ),
-                            ],
-                          ),
-                        ],
-                        if (links.isNotEmpty) ...[
-                          const SizedBox(height: 8),
-                          Row(
-                            children: [
-                              const Icon(Icons.link, size: 16),
-                              const SizedBox(width: 4),
-                              const Text('外部リンク:'),
-                            ],
-                          ),
-                          const SizedBox(height: 4),
-                          ...links.map(
-                            (link) => Padding(
-                              padding: const EdgeInsets.only(
-                                left: 24,
-                                bottom: 4,
-                              ),
-                              child: GestureDetector(
-                                onTap: () => _launchURL(link),
-                                child: Text(
-                                  link,
-                                  style: const TextStyle(
-                                    color: Colors.blue,
-                                    decoration: TextDecoration.underline,
-                                  ),
-                                ),
+                        child: ShaderMask(
+                          shaderCallback: (rect) {
+                            return const LinearGradient(
+                              begin: Alignment.topCenter,
+                              end: Alignment.bottomCenter,
+                              colors: [Colors.black, Colors.transparent],
+                            ).createShader(
+                                Rect.fromLTRB(0, 0, rect.width, rect.height));
+                          },
+                          blendMode: BlendMode.dstIn,
+                          child: Container(
+                            decoration: const BoxDecoration(
+                              gradient: LinearGradient(
+                                begin: Alignment.topLeft,
+                                end: Alignment.bottomRight,
+                                colors: [Colors.blue, Colors.purple],
                               ),
                             ),
                           ),
-                        ],
-                      ],
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 16),
-                    child: SizedBox(
-                      width: double.infinity,
-                      child: OutlinedButton(
-                        onPressed: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (context) => const EditProfileScreen(),
-                            ),
-                          );
-                        },
-                        style: OutlinedButton.styleFrom(
-                          side: const BorderSide(color: Colors.grey),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(8),
-                          ),
                         ),
-                        child: const Text('プロフィールを編集'),
                       ),
-                    ),
+                      Positioned(
+                        bottom: 20,
+                        left: 20,
+                        child: Container(
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            border: Border.all(
+                              color: const Color(0xFF00F7FF),
+                              width: 3,
+                            ),
+                            boxShadow: const [
+                              BoxShadow(
+                                color: Color(0x8000F7FF),
+                                blurRadius: 15,
+                                spreadRadius: 2,
+                              ),
+                            ],
+                          ),
+                          child: CircleAvatar(
+                            radius: 45,
+                            backgroundImage: photoUrl != null
+                                ? NetworkImage(photoUrl)
+                                : null,
+                            child: photoUrl == null
+                                ? const Icon(Icons.person,
+                                    size: 45, color: Color(0xFF00F7FF))
+                                : null,
+                          ),
+                        ),
+                      ),
+                      Positioned(
+                        bottom: 30,
+                        left: 130,
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              nickname,
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontSize: 24,
+                                fontWeight: FontWeight.bold,
+                                shadows: [
+                                  Shadow(
+                                    color: Color(0xFF00F7FF),
+                                    blurRadius: 10,
+                                  ),
+                                ],
+                              ),
+                            ),
+                            Text(
+                              '@$username',
+                              style: const TextStyle(
+                                color: Color(0xFF00F7FF),
+                                fontSize: 16,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
                   ),
-                  const SizedBox(height: 16),
-                  const Divider(height: 0),
+                ),
+                actions: [
+                  IconButton(
+                    icon: const Icon(
+                      Icons.settings,
+                      color: Color(0xFF00F7FF),
+                      size: 28,
+                    ),
+                    onPressed: () => _showSettingsMenu(context),
+                  ),
                 ],
               ),
-            ),
-            _buildPostsGrid(user.uid),
-          ],
+              SliverToBoxAdapter(
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 20),
+                  child: Column(
+                    children: [
+                      const SizedBox(height: 20),
+                      Container(
+                        padding: const EdgeInsets.all(20),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFF1A1B3F).withOpacity(0.5),
+                          borderRadius: BorderRadius.circular(15),
+                          border: Border.all(
+                            color: const Color(0xFF00F7FF),
+                            width: 1,
+                          ),
+                          boxShadow: const [
+                            BoxShadow(
+                              color: Color(0x4000F7FF),
+                              blurRadius: 10,
+                              spreadRadius: 1,
+                            ),
+                          ],
+                        ),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceAround,
+                          children: [
+                            _buildStatColumn('投稿', postsCount),
+                            Container(
+                              width: 1,
+                              height: 40,
+                              color: const Color(0xFF00F7FF).withOpacity(0.3),
+                            ),
+                            GestureDetector(
+                              onTap: () {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (context) => FollowListScreen(
+                                      userId: user.uid,
+                                      isFollowers: true,
+                                    ),
+                                  ),
+                                );
+                              },
+                              child: _buildStatColumn('フォロワー', followersCount),
+                            ),
+                            Container(
+                              width: 1,
+                              height: 40,
+                              color: const Color(0xFF00F7FF).withOpacity(0.3),
+                            ),
+                            GestureDetector(
+                              onTap: () {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (context) => FollowListScreen(
+                                      userId: user.uid,
+                                      isFollowers: false,
+                                    ),
+                                  ),
+                                );
+                              },
+                              child: _buildStatColumn('フォロー中', followingCount),
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(height: 20),
+                      Container(
+                        width: double.infinity,
+                        padding: const EdgeInsets.all(20),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFF1A1B3F).withOpacity(0.5),
+                          borderRadius: BorderRadius.circular(15),
+                          border: Border.all(
+                            color: const Color(0xFF00F7FF),
+                            width: 1,
+                          ),
+                          boxShadow: const [
+                            BoxShadow(
+                              color: Color(0x4000F7FF),
+                              blurRadius: 10,
+                              spreadRadius: 1,
+                            ),
+                          ],
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            if (bio.isNotEmpty) ...[
+                              Text(
+                                bio,
+                                style: const TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 16,
+                                ),
+                              ),
+                              const SizedBox(height: 15),
+                            ],
+                            Row(
+                              children: [
+                                if (mbti.isNotEmpty)
+                                  Expanded(
+                                    child: _buildProfileItem(
+                                        Icons.psychology, 'MBTI', mbti),
+                                  ),
+                                const SizedBox(width: 20),
+                                if (occupation.isNotEmpty)
+                                  Expanded(
+                                    child: _buildProfileItem(
+                                        Icons.work, '職種', occupation),
+                                  ),
+                              ],
+                            ),
+                            const SizedBox(height: 10),
+                            Row(
+                              children: [
+                                if (university.isNotEmpty)
+                                  Expanded(
+                                    child: _buildProfileItem(
+                                        Icons.school, '大学', university),
+                                  ),
+                                const SizedBox(width: 20),
+                                if (favoritePlaces.isNotEmpty)
+                                  Expanded(
+                                    child: _buildProfileItem(Icons.favorite,
+                                        '好きなお店・企業', favoritePlaces),
+                                  ),
+                              ],
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(height: 20),
+                      SizedBox(
+                        width: double.infinity,
+                        child: ElevatedButton(
+                          onPressed: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => const EditProfileScreen(),
+                              ),
+                            );
+                          },
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.transparent,
+                            foregroundColor: const Color(0xFF00F7FF),
+                            padding: const EdgeInsets.symmetric(vertical: 15),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(10),
+                            ),
+                            side: const BorderSide(
+                              color: Color(0xFF00F7FF),
+                              width: 2,
+                            ),
+                            elevation: 0,
+                          ),
+                          child: const Text(
+                            'プロフィールを編集',
+                            style: TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 20),
+                    ],
+                  ),
+                ),
+              ),
+              _buildPostsGrid(user.uid),
+            ],
+          ),
         );
       },
     );
@@ -388,11 +550,67 @@ class _ProfileTabState extends ConsumerState<ProfileTab> {
       children: [
         Text(
           count.toString(),
-          style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+          style: const TextStyle(
+            fontSize: 24,
+            fontWeight: FontWeight.bold,
+            color: Color(0xFF00F7FF),
+            shadows: [
+              Shadow(
+                color: Color(0x8000F7FF),
+                blurRadius: 10,
+                offset: Offset(0, 0),
+              ),
+            ],
+          ),
         ),
         const SizedBox(height: 4),
-        Text(label, style: const TextStyle(color: Colors.grey)),
+        Text(
+          label,
+          style: const TextStyle(
+            color: Colors.white70,
+            fontSize: 14,
+          ),
+        ),
       ],
+    );
+  }
+
+  Widget _buildProfileItem(IconData icon, String label, String value) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 12),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Icon(
+            icon,
+            size: 20,
+            color: const Color(0xFF00F7FF),
+          ),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  label,
+                  style: const TextStyle(
+                    color: Color(0xFF00F7FF),
+                    fontSize: 14,
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  value,
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 16,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
     );
   }
 
@@ -406,13 +624,22 @@ class _ProfileTabState extends ConsumerState<ProfileTab> {
       builder: (context, snapshot) {
         if (snapshot.hasError) {
           return SliverToBoxAdapter(
-            child: Center(child: Text('エラーが発生しました: ${snapshot.error}')),
+            child: Center(
+              child: Text(
+                'エラーが発生しました: ${snapshot.error}',
+                style: const TextStyle(color: Colors.white70),
+              ),
+            ),
           );
         }
 
         if (snapshot.connectionState == ConnectionState.waiting) {
           return const SliverToBoxAdapter(
-            child: Center(child: CircularProgressIndicator()),
+            child: Center(
+              child: CircularProgressIndicator(
+                color: Color(0xFF00F7FF),
+              ),
+            ),
           );
         }
 
@@ -427,12 +654,15 @@ class _ProfileTabState extends ConsumerState<ProfileTab> {
                     Icon(
                       Icons.photo_library_outlined,
                       size: 48,
-                      color: Colors.grey,
+                      color: Color(0xFF00F7FF),
                     ),
                     SizedBox(height: 16),
                     Text(
                       '投稿がありません',
-                      style: TextStyle(color: Colors.grey, fontSize: 16),
+                      style: TextStyle(
+                        color: Colors.white70,
+                        fontSize: 16,
+                      ),
                     ),
                   ],
                 ),
@@ -442,66 +672,133 @@ class _ProfileTabState extends ConsumerState<ProfileTab> {
         }
 
         final posts = snapshot.data!.docs;
-        return SliverGrid(
-          gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-            crossAxisCount: 3,
-            crossAxisSpacing: 1,
-            mainAxisSpacing: 1,
-          ),
-          delegate: SliverChildBuilderDelegate((context, index) {
-            final post = posts[index].data() as Map<String, dynamic>;
-            final imageUrl = post['imageUrl'] as String?;
-            final caption = post['caption'] as String?;
+        return SliverPadding(
+          padding: const EdgeInsets.symmetric(horizontal: 20),
+          sliver: SliverGrid(
+            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+              crossAxisCount: 2,
+              crossAxisSpacing: 15,
+              mainAxisSpacing: 15,
+              childAspectRatio: 1,
+            ),
+            delegate: SliverChildBuilderDelegate(
+              (context, index) {
+                final post = posts[index].data() as Map<String, dynamic>;
+                final imageUrl = post['imageUrl'] as String?;
+                final caption = post['caption'] as String?;
 
-            return GestureDetector(
-              onTap: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => PostDetailScreen(
-                      postId: posts[index].id,
-                      post: post,
-                      userId: post['userId'] as String,
+                return GestureDetector(
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => PostDetailScreen(
+                          postId: posts[index].id,
+                          post: post,
+                          userId: post['userId'] as String,
+                        ),
+                      ),
+                    );
+                  },
+                  child: Container(
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(15),
+                      border: Border.all(
+                        color: const Color(0xFF00F7FF),
+                        width: 1,
+                      ),
+                      boxShadow: const [
+                        BoxShadow(
+                          color: Color(0x4000F7FF),
+                          blurRadius: 8,
+                          spreadRadius: 0,
+                        ),
+                      ],
+                    ),
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(14),
+                      child: Stack(
+                        fit: StackFit.expand,
+                        children: [
+                          if (imageUrl != null)
+                            Image.network(
+                              imageUrl,
+                              fit: BoxFit.cover,
+                              loadingBuilder:
+                                  (context, child, loadingProgress) {
+                                if (loadingProgress == null) return child;
+                                return Center(
+                                  child: CircularProgressIndicator(
+                                    color: const Color(0xFF00F7FF),
+                                    value: loadingProgress.expectedTotalBytes !=
+                                            null
+                                        ? loadingProgress
+                                                .cumulativeBytesLoaded /
+                                            loadingProgress.expectedTotalBytes!
+                                        : null,
+                                  ),
+                                );
+                              },
+                              errorBuilder: (context, error, stackTrace) {
+                                print('Error loading image: $error');
+                                return const Center(
+                                  child: Icon(
+                                    Icons.error_outline,
+                                    color: Color(0xFF00F7FF),
+                                    size: 32,
+                                  ),
+                                );
+                              },
+                            )
+                          else
+                            Container(
+                              color: const Color(0xFF1A1B3F),
+                              child: const Center(
+                                child: Icon(
+                                  Icons.image,
+                                  color: Color(0xFF00F7FF),
+                                  size: 32,
+                                ),
+                              ),
+                            ),
+                          Positioned(
+                            bottom: 0,
+                            left: 0,
+                            right: 0,
+                            child: Container(
+                              decoration: BoxDecoration(
+                                gradient: LinearGradient(
+                                  begin: Alignment.topCenter,
+                                  end: Alignment.bottomCenter,
+                                  colors: [
+                                    Colors.transparent,
+                                    Colors.black.withOpacity(0.7),
+                                  ],
+                                ),
+                              ),
+                              padding: const EdgeInsets.all(8),
+                              child: caption != null && caption.isNotEmpty
+                                  ? Text(
+                                      caption,
+                                      maxLines: 2,
+                                      overflow: TextOverflow.ellipsis,
+                                      style: const TextStyle(
+                                        color: Colors.white,
+                                        fontSize: 12,
+                                      ),
+                                    )
+                                  : null,
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
                   ),
                 );
               },
-              child: Stack(
-                fit: StackFit.expand,
-                children: [
-                  if (imageUrl != null)
-                    Image.network(
-                      imageUrl,
-                      fit: BoxFit.cover,
-                      loadingBuilder: (context, child, loadingProgress) {
-                        if (loadingProgress == null) return child;
-                        return Center(
-                          child: CircularProgressIndicator(
-                            value: loadingProgress.expectedTotalBytes != null
-                                ? loadingProgress.cumulativeBytesLoaded /
-                                    loadingProgress.expectedTotalBytes!
-                                : null,
-                          ),
-                        );
-                      },
-                      errorBuilder: (context, error, stackTrace) {
-                        print('Error loading image: $error');
-                        return const Center(
-                          child: Icon(Icons.error_outline, color: Colors.red),
-                        );
-                      },
-                    )
-                  else
-                    Container(
-                      color: Colors.grey[200],
-                      child: const Center(
-                        child: Icon(Icons.image, color: Colors.grey),
-                      ),
-                    ),
-                ],
-              ),
-            );
-          }, childCount: posts.length),
+              childCount: posts.length,
+            ),
+          ),
         );
       },
     );

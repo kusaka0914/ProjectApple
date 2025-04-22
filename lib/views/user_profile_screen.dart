@@ -3,11 +3,16 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import '../models/app_user.dart';
 import 'message_detail_screen.dart';
+import 'follow_list_screen.dart';
+import 'post_detail_screen.dart';
 
 class UserProfileScreen extends StatefulWidget {
-  final AppUser user;
+  final String userId;
 
-  const UserProfileScreen({super.key, required this.user});
+  const UserProfileScreen({
+    super.key,
+    required this.userId,
+  });
 
   @override
   State<UserProfileScreen> createState() => _UserProfileScreenState();
@@ -31,7 +36,7 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
         .collection('users')
         .doc(currentUserId)
         .collection('following')
-        .doc(widget.user.id)
+        .doc(widget.userId)
         .get();
 
     if (mounted) {
@@ -53,18 +58,18 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
           .collection('users')
           .doc(currentUserId)
           .collection('following')
-          .doc(widget.user.id);
+          .doc(widget.userId);
 
       final followerRef = FirebaseFirestore.instance
           .collection('users')
-          .doc(widget.user.id)
+          .doc(widget.userId)
           .collection('followers')
           .doc(currentUserId);
 
       final currentUserRef =
           FirebaseFirestore.instance.collection('users').doc(currentUserId);
       final targetUserRef =
-          FirebaseFirestore.instance.collection('users').doc(widget.user.id);
+          FirebaseFirestore.instance.collection('users').doc(widget.userId);
 
       if (_isFollowing) {
         batch.delete(followingRef);
@@ -91,12 +96,14 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
         });
       }
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(_isFollowing ? 'フォロー解除に失敗しました' : 'フォローに失敗しました'),
-          backgroundColor: Colors.red,
-        ),
-      );
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(_isFollowing ? 'フォロー解除に失敗しました' : 'フォローに失敗しました'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
     } finally {
       if (mounted) {
         setState(() => _isLoading = false);
@@ -112,7 +119,7 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
       }
 
       // 自分自身とのチャットを防ぐ
-      if (currentUserId == widget.user.id) {
+      if (currentUserId == widget.userId) {
         throw Exception('自分自身とチャットを開始することはできません');
       }
 
@@ -120,16 +127,16 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
       final existingMessages = await FirebaseFirestore.instance
           .collection('messages')
           .where('participants',
-              arrayContainsAny: [currentUserId, widget.user.id]).get();
+              arrayContainsAny: [currentUserId, widget.userId]).get();
 
       String? messageId;
       // 両方のユーザーを含むチャットルームを探す
       for (var doc in existingMessages.docs) {
         final participants = List<String>.from(doc['participants'] ?? []);
         if (participants.contains(currentUserId) &&
-            participants.contains(widget.user.id)) {
+            participants.contains(widget.userId)) {
           messageId = doc.id;
-          break; // 既存のチャットルームが見つかったらループを抜ける
+          break;
         }
       }
 
@@ -140,26 +147,36 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
             .doc(currentUserId)
             .get();
 
-        if (!currentUser.exists) {
+        final targetUser = await FirebaseFirestore.instance
+            .collection('users')
+            .doc(widget.userId)
+            .get();
+
+        if (!currentUser.exists || !targetUser.exists) {
           throw Exception('ユーザー情報が見つかりません');
         }
 
         final currentUserData = currentUser.data() as Map<String, dynamic>;
+        final targetUserData = targetUser.data() as Map<String, dynamic>;
 
         final newMessageRef =
             FirebaseFirestore.instance.collection('messages').doc();
         await newMessageRef.set({
-          'participants': [currentUserId, widget.user.id],
+          'participants': [currentUserId, widget.userId],
           'participantDetails': {
             currentUserId: {
               'id': currentUserId,
-              'displayName': currentUserData['displayName'] ?? '',
+              'displayName': currentUserData['nickname'] ??
+                  currentUserData['username'] ??
+                  '',
               'photoUrl': currentUserData['photoUrl'] ?? '',
             },
-            widget.user.id: {
-              'id': widget.user.id,
-              'displayName': widget.user.displayName,
-              'photoUrl': widget.user.imageUrl,
+            widget.userId: {
+              'id': widget.userId,
+              'displayName': targetUserData['nickname'] ??
+                  targetUserData['username'] ??
+                  '',
+              'photoUrl': targetUserData['photoUrl'] ?? '',
             },
           },
           'lastMessage': '',
@@ -171,12 +188,12 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
         messageId = newMessageRef.id;
 
         // チャットサブコレクションに初期メッセージを作成
-        await newMessageRef.collection('chat').add({
-          'senderId': 'system',
-          'message': 'チャットが開始されました',
-          'createdAt': FieldValue.serverTimestamp(),
-          'type': 'system',
-        });
+        // await newMessageRef.collection('chat').add({
+        //   'senderId': 'system',
+        //   'message': 'チャットが開始されました',
+        //   'createdAt': FieldValue.serverTimestamp(),
+        //   'type': 'system',
+        // });
       }
 
       if (mounted && messageId != null) {
@@ -205,23 +222,59 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
     return StreamBuilder<DocumentSnapshot>(
       stream: FirebaseFirestore.instance
           .collection('users')
-          .doc(widget.user.id)
+          .doc(widget.userId)
           .snapshots(),
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
-          return const Scaffold(
-            body: Center(child: CircularProgressIndicator()),
+          return Scaffold(
+            backgroundColor: Colors.transparent,
+            body: Container(
+              decoration: const BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                  colors: [
+                    Color(0xFF0B1221),
+                    Color(0xFF1A1B3F),
+                  ],
+                ),
+              ),
+              child: const Center(
+                child: CircularProgressIndicator(
+                  color: Color(0xFF00F7FF),
+                ),
+              ),
+            ),
           );
         }
 
         if (!snapshot.hasData || !snapshot.data!.exists) {
-          return const Scaffold(
-            body: Center(child: Text('ユーザーが見つかりません')),
+          return Scaffold(
+            backgroundColor: Colors.transparent,
+            body: Container(
+              decoration: const BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                  colors: [
+                    Color(0xFF0B1221),
+                    Color(0xFF1A1B3F),
+                  ],
+                ),
+              ),
+              child: const Center(
+                child: Text(
+                  'ユーザーが見つかりません',
+                  style: TextStyle(color: Colors.white),
+                ),
+              ),
+            ),
           );
         }
 
         final userData = snapshot.data!.data() as Map<String, dynamic>;
-        final displayName = userData['displayName'] as String? ?? 'No Name';
+        final username = userData['username'] as String? ?? 'No Name';
+        final nickname = userData['nickname'] as String? ?? username;
         final bio = userData['bio'] as String? ?? '';
         final mbti = userData['mbti'] as String? ?? '';
         final occupation = userData['occupation'] as String? ?? '';
@@ -234,171 +287,366 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
         final photoUrl = userData['photoUrl'] as String?;
 
         return Scaffold(
-          appBar: AppBar(
-            title: Text(displayName),
-            actions: [
-              if (_isLoading)
-                const Padding(
-                  padding: EdgeInsets.all(16),
-                  child: SizedBox(
-                    width: 24,
-                    height: 24,
-                    child: CircularProgressIndicator(strokeWidth: 2),
-                  ),
-                )
-              else
-                IconButton(
-                  icon: Icon(
-                      _isFollowing ? Icons.person_remove : Icons.person_add),
-                  onPressed: _toggleFollow,
-                ),
-            ],
-          ),
-          body: CustomScrollView(
-            slivers: [
-              SliverToBoxAdapter(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Padding(
-                      padding: const EdgeInsets.all(16),
-                      child: Row(
-                        children: [
-                          CircleAvatar(
-                            radius: 40,
-                            backgroundImage: photoUrl != null
-                                ? NetworkImage(photoUrl)
-                                : null,
-                            child: photoUrl == null
-                                ? const Icon(Icons.person, size: 40)
-                                : null,
-                          ),
-                          const SizedBox(width: 24),
-                          Expanded(
-                            child: Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                              children: [
-                                _buildStatColumn('投稿', postsCount),
-                                _buildStatColumn('フォロワー', followersCount),
-                                _buildStatColumn('フォロー中', followingCount),
-                              ],
-                            ),
-                          ),
-                        ],
-                      ),
+          backgroundColor: Colors.transparent,
+          body: Container(
+            decoration: const BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
+                colors: [
+                  Color(0xFF0B1221),
+                  Color(0xFF1A1B3F),
+                  Color(0xFF0B1221),
+                ],
+              ),
+            ),
+            child: CustomScrollView(
+              slivers: [
+                SliverAppBar(
+                  expandedHeight: 200,
+                  floating: false,
+                  pinned: true,
+                  stretch: true,
+                  backgroundColor: Colors.transparent,
+                  leading: IconButton(
+                    icon: const Icon(
+                      Icons.arrow_back,
+                      color: Color(0xFF00F7FF),
                     ),
-                    Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 16),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            displayName,
-                            style: const TextStyle(
-                              fontWeight: FontWeight.bold,
-                              fontSize: 16,
+                    onPressed: () => Navigator.pop(context),
+                  ),
+                  flexibleSpace: FlexibleSpaceBar(
+                    stretchModes: const [
+                      StretchMode.zoomBackground,
+                      StretchMode.blurBackground,
+                    ],
+                    background: Stack(
+                      fit: StackFit.expand,
+                      children: [
+                        Container(
+                          decoration: const BoxDecoration(
+                            gradient: LinearGradient(
+                              begin: Alignment.topLeft,
+                              end: Alignment.bottomRight,
+                              colors: [
+                                Color(0xFF00F7FF),
+                                Color(0xFF0B1221),
+                              ],
                             ),
                           ),
-                          if (bio.isNotEmpty) ...[
-                            const SizedBox(height: 4),
-                            Text(bio),
-                          ],
-                          if (mbti.isNotEmpty) ...[
-                            const SizedBox(height: 8),
-                            Row(
-                              children: [
-                                const Icon(Icons.psychology, size: 16),
-                                const SizedBox(width: 4),
-                                Text('MBTI: $mbti'),
-                              ],
+                          child: ShaderMask(
+                            shaderCallback: (rect) {
+                              return const LinearGradient(
+                                begin: Alignment.topCenter,
+                                end: Alignment.bottomCenter,
+                                colors: [Colors.black, Colors.transparent],
+                              ).createShader(
+                                  Rect.fromLTRB(0, 0, rect.width, rect.height));
+                            },
+                            blendMode: BlendMode.dstIn,
+                            child: Container(
+                              decoration: const BoxDecoration(
+                                gradient: LinearGradient(
+                                  begin: Alignment.topLeft,
+                                  end: Alignment.bottomRight,
+                                  colors: [Colors.blue, Colors.purple],
+                                ),
+                              ),
                             ),
-                          ],
-                          if (occupation.isNotEmpty) ...[
-                            const SizedBox(height: 8),
-                            Row(
-                              children: [
-                                const Icon(Icons.work, size: 16),
-                                const SizedBox(width: 4),
-                                Text('職種: $occupation'),
-                              ],
-                            ),
-                          ],
-                          if (university.isNotEmpty) ...[
-                            const SizedBox(height: 8),
-                            Row(
-                              children: [
-                                const Icon(Icons.school, size: 16),
-                                const SizedBox(width: 4),
-                                Text('大学: $university'),
-                              ],
-                            ),
-                          ],
-                          if (favoritePlaces.isNotEmpty) ...[
-                            const SizedBox(height: 8),
-                            Row(
-                              children: [
-                                const Icon(Icons.favorite, size: 16),
-                                const SizedBox(width: 4),
-                                Expanded(
-                                  child: Text('好きなお店・企業: $favoritePlaces'),
+                          ),
+                        ),
+                        Positioned(
+                          bottom: 20,
+                          left: 20,
+                          child: Container(
+                            decoration: BoxDecoration(
+                              shape: BoxShape.circle,
+                              border: Border.all(
+                                color: const Color(0xFF00F7FF),
+                                width: 3,
+                              ),
+                              boxShadow: const [
+                                BoxShadow(
+                                  color: Color(0x8000F7FF),
+                                  blurRadius: 15,
+                                  spreadRadius: 2,
                                 ),
                               ],
                             ),
-                          ],
-                          if (links.isNotEmpty) ...[
-                            const SizedBox(height: 8),
-                            Row(
-                              children: [
-                                const Icon(Icons.link, size: 16),
-                                const SizedBox(width: 4),
-                                const Text('外部リンク:'),
-                              ],
+                            child: CircleAvatar(
+                              radius: 45,
+                              backgroundImage: photoUrl != null
+                                  ? NetworkImage(photoUrl)
+                                  : null,
+                              child: photoUrl == null
+                                  ? const Icon(Icons.person,
+                                      size: 45, color: Color(0xFF00F7FF))
+                                  : null,
                             ),
-                            const SizedBox(height: 4),
-                            ...links.map(
-                              (link) => Padding(
-                                padding: const EdgeInsets.only(
-                                  left: 24,
-                                  bottom: 4,
+                          ),
+                        ),
+                        Positioned(
+                          bottom: 30,
+                          left: 130,
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                nickname,
+                                style: const TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 24,
+                                  fontWeight: FontWeight.bold,
+                                  shadows: [
+                                    Shadow(
+                                      color: Color(0xFF00F7FF),
+                                      blurRadius: 10,
+                                    ),
+                                  ],
                                 ),
-                                child: Text(
-                                  link,
+                              ),
+                              Text(
+                                '@$username',
+                                style: const TextStyle(
+                                  color: Color(0xFF00F7FF),
+                                  fontSize: 16,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+                SliverToBoxAdapter(
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 20),
+                    child: Column(
+                      children: [
+                        const SizedBox(height: 20),
+                        Container(
+                          padding: const EdgeInsets.all(20),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFF1A1B3F).withOpacity(0.5),
+                            borderRadius: BorderRadius.circular(15),
+                            border: Border.all(
+                              color: const Color(0xFF00F7FF),
+                              width: 1,
+                            ),
+                            boxShadow: const [
+                              BoxShadow(
+                                color: Color(0x4000F7FF),
+                                blurRadius: 10,
+                                spreadRadius: 1,
+                              ),
+                            ],
+                          ),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceAround,
+                            children: [
+                              _buildStatColumn('投稿', postsCount),
+                              Container(
+                                width: 1,
+                                height: 40,
+                                color: const Color(0xFF00F7FF).withOpacity(0.3),
+                              ),
+                              GestureDetector(
+                                onTap: () {
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (context) => FollowListScreen(
+                                        userId: widget.userId,
+                                        isFollowers: true,
+                                      ),
+                                    ),
+                                  );
+                                },
+                                child:
+                                    _buildStatColumn('フォロワー', followersCount),
+                              ),
+                              Container(
+                                width: 1,
+                                height: 40,
+                                color: const Color(0xFF00F7FF).withOpacity(0.3),
+                              ),
+                              GestureDetector(
+                                onTap: () {
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (context) => FollowListScreen(
+                                        userId: widget.userId,
+                                        isFollowers: false,
+                                      ),
+                                    ),
+                                  );
+                                },
+                                child:
+                                    _buildStatColumn('フォロー中', followingCount),
+                              ),
+                            ],
+                          ),
+                        ),
+                        const SizedBox(height: 20),
+                        Container(
+                          width: double.infinity,
+                          padding: const EdgeInsets.all(20),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFF1A1B3F).withOpacity(0.5),
+                            borderRadius: BorderRadius.circular(15),
+                            border: Border.all(
+                              color: const Color(0xFF00F7FF),
+                              width: 1,
+                            ),
+                            boxShadow: const [
+                              BoxShadow(
+                                color: Color(0x4000F7FF),
+                                blurRadius: 10,
+                                spreadRadius: 1,
+                              ),
+                            ],
+                          ),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              if (bio.isNotEmpty) ...[
+                                Text(
+                                  bio,
                                   style: const TextStyle(
-                                    color: Colors.blue,
-                                    decoration: TextDecoration.underline,
+                                    color: Colors.white,
+                                    fontSize: 16,
+                                  ),
+                                ),
+                                const SizedBox(height: 15),
+                              ],
+                              Row(
+                                children: [
+                                  if (mbti.isNotEmpty)
+                                    Expanded(
+                                      child: _buildProfileItem(
+                                          Icons.psychology, 'MBTI', mbti),
+                                    ),
+                                  const SizedBox(width: 20),
+                                  if (occupation.isNotEmpty)
+                                    Expanded(
+                                      child: _buildProfileItem(
+                                          Icons.work, '職種', occupation),
+                                    ),
+                                ],
+                              ),
+                              const SizedBox(height: 10),
+                              Row(
+                                children: [
+                                  if (university.isNotEmpty)
+                                    Expanded(
+                                      child: _buildProfileItem(
+                                          Icons.school, '大学', university),
+                                    ),
+                                  const SizedBox(width: 20),
+                                  if (favoritePlaces.isNotEmpty)
+                                    Expanded(
+                                      child: _buildProfileItem(Icons.favorite,
+                                          '好きなお店・企業', favoritePlaces),
+                                    ),
+                                ],
+                              ),
+                            ],
+                          ),
+                        ),
+                        const SizedBox(height: 20),
+                        Row(
+                          children: [
+                            Expanded(
+                              child: Container(
+                                decoration: BoxDecoration(
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: const Color(0xFF00F7FF)
+                                          .withOpacity(0.1),
+                                      blurRadius: 8,
+                                      spreadRadius: -2,
+                                    ),
+                                  ],
+                                ),
+                                child: OutlinedButton.icon(
+                                  onPressed: _isLoading ? null : _toggleFollow,
+                                  icon: Icon(
+                                    _isFollowing
+                                        ? Icons.person_remove
+                                        : Icons.person_add,
+                                    color: _isFollowing
+                                        ? Colors.white70
+                                        : const Color(0xFF00F7FF),
+                                  ),
+                                  label: Text(
+                                    _isFollowing ? 'フォロー中' : 'フォローする',
+                                    style: TextStyle(
+                                      color: _isFollowing
+                                          ? Colors.white70
+                                          : const Color(0xFF00F7FF),
+                                    ),
+                                  ),
+                                  style: OutlinedButton.styleFrom(
+                                    side: BorderSide(
+                                      color: _isFollowing
+                                          ? Colors.white30
+                                          : const Color(0xFF00F7FF),
+                                    ),
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(8),
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ),
+                            const SizedBox(width: 8),
+                            Expanded(
+                              child: Container(
+                                decoration: BoxDecoration(
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: const Color(0xFF00F7FF)
+                                          .withOpacity(0.1),
+                                      blurRadius: 8,
+                                      spreadRadius: -2,
+                                    ),
+                                  ],
+                                ),
+                                child: OutlinedButton.icon(
+                                  onPressed: _startChat,
+                                  icon: const Icon(
+                                    Icons.message,
+                                    color: Color(0xFF00F7FF),
+                                  ),
+                                  label: const Text(
+                                    'メッセージ',
+                                    style: TextStyle(
+                                      color: Color(0xFF00F7FF),
+                                    ),
+                                  ),
+                                  style: OutlinedButton.styleFrom(
+                                    side: const BorderSide(
+                                      color: Color(0xFF00F7FF),
+                                    ),
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(8),
+                                    ),
                                   ),
                                 ),
                               ),
                             ),
                           ],
-                        ],
-                      ),
-                    ),
-                    const SizedBox(height: 16),
-                    Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 16),
-                      child: SizedBox(
-                        width: double.infinity,
-                        child: OutlinedButton.icon(
-                          onPressed: _startChat,
-                          icon: const Icon(Icons.message),
-                          label: const Text('メッセージを送る'),
-                          style: OutlinedButton.styleFrom(
-                            side: const BorderSide(color: Colors.grey),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(8),
-                            ),
-                          ),
                         ),
-                      ),
+                        const SizedBox(height: 20),
+                      ],
                     ),
-                    const SizedBox(height: 16),
-                    const Divider(height: 0),
-                  ],
+                  ),
                 ),
-              ),
-              _buildPostsGrid(widget.user.id),
-            ],
+                _buildPostsGrid(widget.userId),
+              ],
+            ),
           ),
         );
       },
@@ -411,11 +659,67 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
       children: [
         Text(
           count.toString(),
-          style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+          style: const TextStyle(
+            fontSize: 24,
+            fontWeight: FontWeight.bold,
+            color: Color(0xFF00F7FF),
+            shadows: [
+              Shadow(
+                color: Color(0x8000F7FF),
+                blurRadius: 10,
+                offset: Offset(0, 0),
+              ),
+            ],
+          ),
         ),
         const SizedBox(height: 4),
-        Text(label, style: const TextStyle(color: Colors.grey)),
+        Text(
+          label,
+          style: const TextStyle(
+            color: Colors.white70,
+            fontSize: 14,
+          ),
+        ),
       ],
+    );
+  }
+
+  Widget _buildProfileItem(IconData icon, String label, String value) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 12),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Icon(
+            icon,
+            size: 20,
+            color: const Color(0xFF00F7FF),
+          ),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  label,
+                  style: const TextStyle(
+                    color: Color(0xFF00F7FF),
+                    fontSize: 14,
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  value,
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 16,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
     );
   }
 
@@ -429,13 +733,22 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
       builder: (context, snapshot) {
         if (snapshot.hasError) {
           return SliverToBoxAdapter(
-            child: Center(child: Text('エラーが発生しました: ${snapshot.error}')),
+            child: Center(
+              child: Text(
+                'エラーが発生しました: ${snapshot.error}',
+                style: const TextStyle(color: Colors.white70),
+              ),
+            ),
           );
         }
 
         if (snapshot.connectionState == ConnectionState.waiting) {
           return const SliverToBoxAdapter(
-            child: Center(child: CircularProgressIndicator()),
+            child: Center(
+              child: CircularProgressIndicator(
+                color: Color(0xFF00F7FF),
+              ),
+            ),
           );
         }
 
@@ -450,12 +763,15 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
                     Icon(
                       Icons.photo_library_outlined,
                       size: 48,
-                      color: Colors.grey,
+                      color: Color(0xFF00F7FF),
                     ),
                     SizedBox(height: 16),
                     Text(
                       '投稿がありません',
-                      style: TextStyle(color: Colors.grey, fontSize: 16),
+                      style: TextStyle(
+                        color: Colors.white70,
+                        fontSize: 16,
+                      ),
                     ),
                   ],
                 ),
@@ -465,57 +781,131 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
         }
 
         final posts = snapshot.data!.docs;
-        return SliverGrid(
-          gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-            crossAxisCount: 3,
-            crossAxisSpacing: 1,
-            mainAxisSpacing: 1,
-          ),
-          delegate: SliverChildBuilderDelegate(
-            (context, index) {
-              final post = posts[index].data() as Map<String, dynamic>;
-              final imageUrl = post['imageUrl'] as String?;
+        return SliverPadding(
+          padding: const EdgeInsets.symmetric(horizontal: 20),
+          sliver: SliverGrid(
+            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+              crossAxisCount: 2,
+              crossAxisSpacing: 15,
+              mainAxisSpacing: 15,
+              childAspectRatio: 1,
+            ),
+            delegate: SliverChildBuilderDelegate(
+              (context, index) {
+                final post = posts[index].data() as Map<String, dynamic>;
+                final imageUrl = post['imageUrl'] as String?;
+                final caption = post['caption'] as String?;
 
-              return GestureDetector(
-                onTap: () {
-                  // TODO: 投稿詳細画面に遷移
-                },
-                child: Stack(
-                  fit: StackFit.expand,
-                  children: [
-                    if (imageUrl != null)
-                      Image.network(
-                        imageUrl,
-                        fit: BoxFit.cover,
-                        loadingBuilder: (context, child, loadingProgress) {
-                          if (loadingProgress == null) return child;
-                          return Center(
-                            child: CircularProgressIndicator(
-                              value: loadingProgress.expectedTotalBytes != null
-                                  ? loadingProgress.cumulativeBytesLoaded /
-                                      loadingProgress.expectedTotalBytes!
-                                  : null,
-                            ),
-                          );
-                        },
-                        errorBuilder: (context, error, stackTrace) {
-                          return const Center(
-                            child: Icon(Icons.error_outline, color: Colors.red),
-                          );
-                        },
-                      )
-                    else
-                      Container(
-                        color: Colors.grey[200],
-                        child: const Center(
-                          child: Icon(Icons.image, color: Colors.grey),
+                return GestureDetector(
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => PostDetailScreen(
+                          postId: posts[index].id,
+                          post: post,
+                          userId: post['userId'] as String,
                         ),
                       ),
-                  ],
-                ),
-              );
-            },
-            childCount: posts.length,
+                    );
+                  },
+                  child: Container(
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(15),
+                      border: Border.all(
+                        color: const Color(0xFF00F7FF),
+                        width: 1,
+                      ),
+                      boxShadow: const [
+                        BoxShadow(
+                          color: Color(0x4000F7FF),
+                          blurRadius: 8,
+                          spreadRadius: 0,
+                        ),
+                      ],
+                    ),
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(14),
+                      child: Stack(
+                        fit: StackFit.expand,
+                        children: [
+                          if (imageUrl != null)
+                            Image.network(
+                              imageUrl,
+                              fit: BoxFit.cover,
+                              loadingBuilder:
+                                  (context, child, loadingProgress) {
+                                if (loadingProgress == null) return child;
+                                return Center(
+                                  child: CircularProgressIndicator(
+                                    color: const Color(0xFF00F7FF),
+                                    value: loadingProgress.expectedTotalBytes !=
+                                            null
+                                        ? loadingProgress
+                                                .cumulativeBytesLoaded /
+                                            loadingProgress.expectedTotalBytes!
+                                        : null,
+                                  ),
+                                );
+                              },
+                              errorBuilder: (context, error, stackTrace) {
+                                print('Error loading image: $error');
+                                return const Center(
+                                  child: Icon(
+                                    Icons.error_outline,
+                                    color: Color(0xFF00F7FF),
+                                    size: 32,
+                                  ),
+                                );
+                              },
+                            )
+                          else
+                            Container(
+                              color: const Color(0xFF1A1B3F),
+                              child: const Center(
+                                child: Icon(
+                                  Icons.image,
+                                  color: Color(0xFF00F7FF),
+                                  size: 32,
+                                ),
+                              ),
+                            ),
+                          if (caption != null && caption.isNotEmpty)
+                            Positioned(
+                              bottom: 0,
+                              left: 0,
+                              right: 0,
+                              child: Container(
+                                decoration: BoxDecoration(
+                                  gradient: LinearGradient(
+                                    begin: Alignment.topCenter,
+                                    end: Alignment.bottomCenter,
+                                    colors: [
+                                      Colors.transparent,
+                                      Colors.black.withOpacity(0.7),
+                                    ],
+                                  ),
+                                ),
+                                padding: const EdgeInsets.all(8),
+                                child: Text(
+                                  caption,
+                                  maxLines: 2,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: const TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 12,
+                                  ),
+                                ),
+                              ),
+                            ),
+                        ],
+                      ),
+                    ),
+                  ),
+                );
+              },
+              childCount: posts.length,
+            ),
           ),
         );
       },

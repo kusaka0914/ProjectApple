@@ -143,120 +143,292 @@ class _CreateEventScreenState extends State<CreateEventScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: Colors.transparent,
       appBar: AppBar(
-        title: const Text('イベントを作成'),
+        backgroundColor: const Color(0xFF1A1B3F),
+        // title: const Text(
+        //   'イベントを作成',
+        //   style: TextStyle(color: Colors.white),
+        // ),
+        leading: IconButton(
+          icon: const Icon(
+            Icons.arrow_back,
+            color: Color(0xFF00F7FF),
+          ),
+          onPressed: () => Navigator.pop(context),
+        ),
         actions: [
           if (!_isLoading)
-            TextButton(onPressed: _createEvent, child: const Text('作成')),
-        ],
-      ),
-      body: Form(
-        key: _formKey,
-        child: ListView(
-          padding: const EdgeInsets.all(16),
-          children: [
-            AspectRatio(
-              aspectRatio: 16 / 9,
-              child: Container(
-                decoration: BoxDecoration(
-                  image: DecorationImage(
-                    image: FileImage(widget.imageFile),
-                    fit: BoxFit.cover,
+            Container(
+              margin: const EdgeInsets.only(right: 8),
+              decoration: BoxDecoration(
+                boxShadow: [
+                  BoxShadow(
+                    color: const Color(0xFF00F7FF).withOpacity(0.2),
+                    blurRadius: 10,
+                    spreadRadius: -5,
+                  ),
+                ],
+              ),
+              child: TextButton(
+                onPressed: _createEvent,
+                style: TextButton.styleFrom(
+                  backgroundColor: const Color(0xFF00F7FF),
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                ),
+                child: const Text(
+                  '作成',
+                  style: TextStyle(
+                    color: Colors.black,
+                    fontWeight: FontWeight.bold,
                   ),
                 ),
               ),
             ),
-            const SizedBox(height: 16),
-            TextFormField(
-              controller: _titleController,
-              decoration: const InputDecoration(
-                labelText: 'イベントタイトル',
-                border: OutlineInputBorder(),
-              ),
-              validator: (value) {
-                if (value == null || value.isEmpty) {
-                  return 'タイトルを入力してください';
-                }
-                return null;
-              },
-            ),
-            const SizedBox(height: 16),
-            TextFormField(
-              controller: _descriptionController,
-              decoration: const InputDecoration(
-                labelText: 'イベント詳細',
-                border: OutlineInputBorder(),
-              ),
-              maxLines: 3,
-              validator: (value) {
-                if (value == null || value.isEmpty) {
-                  return '詳細を入力してください';
-                }
-                return null;
-              },
-            ),
-            const SizedBox(height: 16),
-            Row(
-              children: [
-                Expanded(
-                  child: TextButton.icon(
-                    onPressed: _selectDate,
-                    icon: const Icon(Icons.calendar_today),
-                    label: Text(
-                      '日付: ${_selectedDate.year}/${_selectedDate.month}/${_selectedDate.day}',
+        ],
+      ),
+      body: Container(
+        decoration: const BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+            colors: [
+              Color(0xFF0B1221),
+              Color(0xFF1A1B3F),
+            ],
+          ),
+        ),
+        child: Form(
+          key: _formKey,
+          child: ListView(
+            padding: const EdgeInsets.all(16),
+            children: [
+              Container(
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(
+                    color: const Color(0xFF00F7FF),
+                    width: 1,
+                  ),
+                  boxShadow: [
+                    BoxShadow(
+                      color: const Color(0xFF00F7FF).withOpacity(0.1),
+                      blurRadius: 8,
+                      spreadRadius: -4,
+                    ),
+                  ],
+                ),
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(12),
+                  child: AspectRatio(
+                    aspectRatio: 16 / 9,
+                    child: Container(
+                      decoration: BoxDecoration(
+                        image: DecorationImage(
+                          image: FileImage(widget.imageFile),
+                          fit: BoxFit.cover,
+                        ),
+                      ),
                     ),
                   ),
                 ),
-                const SizedBox(width: 16),
-                Expanded(
-                  child: TextButton.icon(
-                    onPressed: _selectTime,
-                    icon: const Icon(Icons.access_time),
-                    label: Text('時間: ${_selectedTime.format(context)}'),
+              ),
+              const SizedBox(height: 24),
+              _buildTextField(
+                controller: _titleController,
+                labelText: 'イベントタイトル',
+                validator: (value) {
+                  if (value == null || value.isEmpty) {
+                    return 'タイトルを入力してください';
+                  }
+                  return null;
+                },
+              ),
+              const SizedBox(height: 16),
+              _buildTextField(
+                controller: _descriptionController,
+                labelText: 'イベント詳細',
+                maxLines: 3,
+                validator: (value) {
+                  if (value == null || value.isEmpty) {
+                    return '詳細を入力してください';
+                  }
+                  return null;
+                },
+              ),
+              const SizedBox(height: 24),
+              Container(
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: const Color(0xFF1A1B3F),
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(
+                    color: const Color(0xFF00F7FF),
+                    width: 1,
+                  ),
+                  boxShadow: [
+                    BoxShadow(
+                      color: const Color(0xFF00F7FF).withOpacity(0.1),
+                      blurRadius: 8,
+                      spreadRadius: -4,
+                    ),
+                  ],
+                ),
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: TextButton.icon(
+                        onPressed: _selectDate,
+                        icon: const Icon(
+                          Icons.calendar_today,
+                          color: Color(0xFF00F7FF),
+                        ),
+                        label: Text(
+                          '日付: ${_selectedDate.year}/${_selectedDate.month}/${_selectedDate.day}',
+                          style: const TextStyle(
+                            color: Colors.white,
+                          ),
+                        ),
+                        style: TextButton.styleFrom(
+                          backgroundColor: Colors.transparent,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 16),
+                    Expanded(
+                      child: TextButton.icon(
+                        onPressed: _selectTime,
+                        icon: const Icon(
+                          Icons.access_time,
+                          color: Color(0xFF00F7FF),
+                        ),
+                        label: Text(
+                          '時間: ${_selectedTime.format(context)}',
+                          style: const TextStyle(
+                            color: Colors.white,
+                          ),
+                        ),
+                        style: TextButton.styleFrom(
+                          backgroundColor: Colors.transparent,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 16),
+              _buildTextField(
+                controller: _locationController,
+                labelText: '開催場所',
+                validator: (value) {
+                  if (value == null || value.isEmpty) {
+                    return '開催場所を入力してください';
+                  }
+                  return null;
+                },
+              ),
+              const SizedBox(height: 16),
+              _buildTextField(
+                controller: _maxParticipantsController,
+                labelText: '定員',
+                suffixText: '人',
+                keyboardType: TextInputType.number,
+                validator: (value) {
+                  if (value == null || value.isEmpty) {
+                    return '定員を入力してください';
+                  }
+                  final number = int.tryParse(value);
+                  if (number == null || number <= 0) {
+                    return '有効な人数を入力してください';
+                  }
+                  return null;
+                },
+              ),
+              if (_isLoading) ...[
+                const SizedBox(height: 24),
+                const Center(
+                  child: CircularProgressIndicator(
+                    color: Color(0xFF00F7FF),
                   ),
                 ),
               ],
-            ),
-            const SizedBox(height: 16),
-            TextFormField(
-              controller: _locationController,
-              decoration: const InputDecoration(
-                labelText: '開催場所',
-                border: OutlineInputBorder(),
-              ),
-              validator: (value) {
-                if (value == null || value.isEmpty) {
-                  return '開催場所を入力してください';
-                }
-                return null;
-              },
-            ),
-            const SizedBox(height: 16),
-            TextFormField(
-              controller: _maxParticipantsController,
-              decoration: const InputDecoration(
-                labelText: '定員',
-                border: OutlineInputBorder(),
-                suffixText: '人',
-              ),
-              keyboardType: TextInputType.number,
-              validator: (value) {
-                if (value == null || value.isEmpty) {
-                  return '定員を入力してください';
-                }
-                final number = int.tryParse(value);
-                if (number == null || number <= 0) {
-                  return '有効な人数を入力してください';
-                }
-                return null;
-              },
-            ),
-            if (_isLoading) ...[
-              const SizedBox(height: 16),
-              const Center(child: CircularProgressIndicator()),
+              const SizedBox(height: 32),
             ],
-          ],
+          ),
         ),
+      ),
+    );
+  }
+
+  Widget _buildTextField({
+    required TextEditingController controller,
+    required String labelText,
+    String? suffixText,
+    int maxLines = 1,
+    TextInputType? keyboardType,
+    String? Function(String?)? validator,
+  }) {
+    return Container(
+      decoration: BoxDecoration(
+        color: const Color(0xFF1A1B3F),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: const Color(0xFF00F7FF),
+          width: 1,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: const Color(0xFF00F7FF).withOpacity(0.1),
+            blurRadius: 8,
+            spreadRadius: -4,
+          ),
+        ],
+      ),
+      child: TextFormField(
+        controller: controller,
+        decoration: InputDecoration(
+          labelText: labelText,
+          labelStyle: const TextStyle(color: Colors.white70),
+          suffixText: suffixText,
+          suffixStyle: const TextStyle(color: Color(0xFF00F7FF)),
+          border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(12),
+            borderSide: BorderSide.none,
+          ),
+          enabledBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(12),
+            borderSide: BorderSide.none,
+          ),
+          focusedBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(12),
+            borderSide: const BorderSide(
+              color: Color(0xFF00F7FF),
+              width: 2,
+            ),
+          ),
+          errorBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(12),
+            borderSide: const BorderSide(
+              color: Colors.red,
+              width: 1,
+            ),
+          ),
+          focusedErrorBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(12),
+            borderSide: const BorderSide(
+              color: Colors.red,
+              width: 2,
+            ),
+          ),
+          contentPadding: const EdgeInsets.all(16),
+        ),
+        style: const TextStyle(color: Colors.white),
+        maxLines: maxLines,
+        keyboardType: keyboardType,
+        validator: validator,
       ),
     );
   }

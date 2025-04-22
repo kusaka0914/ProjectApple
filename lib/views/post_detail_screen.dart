@@ -41,13 +41,12 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
     final currentUser = FirebaseAuth.instance.currentUser;
     if (currentUser == null) return;
 
-    final likeDoc =
-        await FirebaseFirestore.instance
-            .collection('posts')
-            .doc(widget.postId)
-            .collection('likes')
-            .doc(currentUser.uid)
-            .get();
+    final likeDoc = await FirebaseFirestore.instance
+        .collection('posts')
+        .doc(widget.postId)
+        .collection('likes')
+        .doc(currentUser.uid)
+        .get();
 
     if (mounted) {
       setState(() {
@@ -65,9 +64,8 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
     });
 
     try {
-      final postRef = FirebaseFirestore.instance
-          .collection('posts')
-          .doc(widget.postId);
+      final postRef =
+          FirebaseFirestore.instance.collection('posts').doc(widget.postId);
       final likeRef = postRef.collection('likes').doc(currentUser.uid);
 
       if (_isLiked) {
@@ -114,10 +112,10 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
           .doc(widget.postId)
           .collection('comments')
           .add({
-            'userId': currentUser.uid,
-            'comment': comment,
-            'createdAt': FieldValue.serverTimestamp(),
-          });
+        'userId': currentUser.uid,
+        'comment': comment,
+        'createdAt': FieldValue.serverTimestamp(),
+      });
 
       await FirebaseFirestore.instance
           .collection('posts')
@@ -175,19 +173,51 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
   void _showFullScreenImage(String imageUrl) {
     Navigator.of(context).push(
       MaterialPageRoute(
-        builder:
-            (context) => Scaffold(
-              backgroundColor: Colors.black,
-              body: GestureDetector(
-                onTap: () => Navigator.of(context).pop(),
-                child: Center(
-                  child: InteractiveViewer(
-                    panEnabled: true,
-                    boundaryMargin: const EdgeInsets.all(20.0),
-                    minScale: 0.5,
-                    maxScale: 4.0,
-                    child: Hero(
-                      tag: 'post_image_${widget.postId}',
+        builder: (context) => Scaffold(
+          backgroundColor: const Color(0xFF0B1221),
+          appBar: AppBar(
+            backgroundColor: Colors.transparent,
+            elevation: 0,
+            leading: IconButton(
+              icon: const Icon(
+                Icons.close,
+                color: Color(0xFF00F7FF),
+              ),
+              onPressed: () => Navigator.of(context).pop(),
+            ),
+          ),
+          body: Container(
+            decoration: const BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
+                colors: [
+                  Color(0xFF0B1221),
+                  Color(0xFF1A1B3F),
+                  Color(0xFF0B1221),
+                ],
+              ),
+            ),
+            child: GestureDetector(
+              onTap: () => Navigator.of(context).pop(),
+              child: Center(
+                child: InteractiveViewer(
+                  panEnabled: true,
+                  boundaryMargin: const EdgeInsets.all(20.0),
+                  minScale: 0.5,
+                  maxScale: 4.0,
+                  child: Hero(
+                    tag: 'post_image_${widget.postId}',
+                    child: Container(
+                      decoration: BoxDecoration(
+                        boxShadow: [
+                          BoxShadow(
+                            color: const Color(0xFF00F7FF).withOpacity(0.3),
+                            blurRadius: 20,
+                            spreadRadius: 5,
+                          ),
+                        ],
+                      ),
                       child: Image.network(
                         imageUrl,
                         fit: BoxFit.contain,
@@ -195,11 +225,11 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
                           if (loadingProgress == null) return child;
                           return Center(
                             child: CircularProgressIndicator(
-                              value:
-                                  loadingProgress.expectedTotalBytes != null
-                                      ? loadingProgress.cumulativeBytesLoaded /
-                                          loadingProgress.expectedTotalBytes!
-                                      : null,
+                              color: const Color(0xFF00F7FF),
+                              value: loadingProgress.expectedTotalBytes != null
+                                  ? loadingProgress.cumulativeBytesLoaded /
+                                      loadingProgress.expectedTotalBytes!
+                                  : null,
                             ),
                           );
                         },
@@ -207,7 +237,7 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
                           return const Center(
                             child: Icon(
                               Icons.error_outline,
-                              color: Colors.red,
+                              color: Color(0xFF00F7FF),
                               size: 48,
                             ),
                           );
@@ -218,6 +248,8 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
                 ),
               ),
             ),
+          ),
+        ),
       ),
     );
   }
@@ -231,228 +263,381 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: const Color(0xFF0B1221),
       appBar: AppBar(
-        title: const Text('投稿詳細'),
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        title: const Text(
+          '投稿詳細',
+          style: TextStyle(
+            color: Color(0xFF00F7FF),
+            fontWeight: FontWeight.bold,
+          ),
+        ),
         actions: [
-          IconButton(icon: const Icon(Icons.share), onPressed: _sharePost),
+          IconButton(
+            icon: const Icon(
+              Icons.share,
+              color: Color(0xFF00F7FF),
+            ),
+            onPressed: _sharePost,
+          ),
         ],
       ),
-      body: StreamBuilder<DocumentSnapshot>(
-        stream:
-            FirebaseFirestore.instance
-                .collection('users')
-                .doc(widget.userId)
-                .snapshots(),
-        builder: (context, userSnapshot) {
-          if (userSnapshot.connectionState == ConnectionState.waiting) {
-            return const Center(child: CircularProgressIndicator());
-          }
+      body: Container(
+        decoration: const BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+            colors: [
+              Color(0xFF0B1221),
+              Color(0xFF1A1B3F),
+              Color(0xFF0B1221),
+            ],
+          ),
+        ),
+        child: StreamBuilder<DocumentSnapshot>(
+          stream: FirebaseFirestore.instance
+              .collection('users')
+              .doc(widget.userId)
+              .snapshots(),
+          builder: (context, userSnapshot) {
+            if (userSnapshot.connectionState == ConnectionState.waiting) {
+              return const Center(
+                child: CircularProgressIndicator(
+                  color: Color(0xFF00F7FF),
+                ),
+              );
+            }
 
-          final userData = userSnapshot.data?.data() as Map<String, dynamic>?;
-          final userName = userData?['displayName'] as String? ?? '不明なユーザー';
-          final userPhotoUrl = userData?['photoUrl'] as String?;
-          final postCreatedAt = widget.post['createdAt'] as Timestamp?;
-          final imageUrl = widget.post['imageUrl'] as String?;
-          final caption = widget.post['caption'] as String? ?? '';
+            final userData = userSnapshot.data?.data() as Map<String, dynamic>?;
+            final userName = userData?['displayName'] as String? ?? '不明なユーザー';
+            final userPhotoUrl = userData?['photoUrl'] as String?;
+            final postCreatedAt = widget.post['createdAt'] as Timestamp?;
+            final imageUrl = widget.post['imageUrl'] as String?;
+            final caption = widget.post['caption'] as String? ?? '';
 
-          return ListView(
-            children: [
-              Padding(
-                padding: const EdgeInsets.all(16),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      children: [
-                        CircleAvatar(
-                          radius: 20,
-                          backgroundImage:
-                              userPhotoUrl != null
-                                  ? NetworkImage(userPhotoUrl)
-                                  : const AssetImage(
-                                        'assets/default_profile.png',
-                                      )
-                                      as ImageProvider,
+            return ListView(
+              children: [
+                Container(
+                  margin: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF1A1B3F).withOpacity(0.5),
+                    borderRadius: BorderRadius.circular(15),
+                    border: Border.all(
+                      color: const Color(0xFF00F7FF),
+                      width: 1,
+                    ),
+                    boxShadow: const [
+                      BoxShadow(
+                        color: Color(0x4000F7FF),
+                        blurRadius: 10,
+                        spreadRadius: 1,
+                      ),
+                    ],
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Padding(
+                        padding: const EdgeInsets.all(16),
+                        child: Row(
+                          children: [
+                            Container(
+                              decoration: BoxDecoration(
+                                shape: BoxShape.circle,
+                                border: Border.all(
+                                  color: const Color(0xFF00F7FF),
+                                  width: 2,
+                                ),
+                                boxShadow: const [
+                                  BoxShadow(
+                                    color: Color(0x8000F7FF),
+                                    blurRadius: 8,
+                                    spreadRadius: 1,
+                                  ),
+                                ],
+                              ),
+                              child: CircleAvatar(
+                                radius: 20,
+                                backgroundImage: userPhotoUrl != null
+                                    ? NetworkImage(userPhotoUrl)
+                                    : const AssetImage(
+                                            'assets/default_profile.png')
+                                        as ImageProvider,
+                              ),
+                            ),
+                            const SizedBox(width: 12),
+                            Text(
+                              userName,
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontWeight: FontWeight.bold,
+                                fontSize: 16,
+                              ),
+                            ),
+                          ],
                         ),
-                        const SizedBox(width: 12),
-                        Text(
-                          userName,
-                          style: const TextStyle(
-                            fontWeight: FontWeight.bold,
-                            fontSize: 16,
+                      ),
+                      if (imageUrl != null) ...[
+                        GestureDetector(
+                          onTap: () => _showFullScreenImage(imageUrl),
+                          child: Container(
+                            decoration: BoxDecoration(
+                              border: Border.symmetric(
+                                horizontal: BorderSide(
+                                  color:
+                                      const Color(0xFF00F7FF).withOpacity(0.3),
+                                  width: 1,
+                                ),
+                              ),
+                            ),
+                            child: Hero(
+                              tag: 'post_image_${widget.postId}',
+                              child: Image.network(
+                                imageUrl,
+                                fit: BoxFit.cover,
+                                width: double.infinity,
+                                height: 300,
+                              ),
+                            ),
                           ),
                         ),
                       ],
-                    ),
-                    if (imageUrl != null) ...[
-                      const SizedBox(height: 12),
-                      GestureDetector(
-                        onTap: () => _showFullScreenImage(imageUrl),
-                        child: Hero(
-                          tag: 'post_image_${widget.postId}',
-                          child: Image.network(
-                            imageUrl,
-                            fit: BoxFit.cover,
-                            width: double.infinity,
-                            height: 300,
-                          ),
+                      Padding(
+                        padding: const EdgeInsets.all(16),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              caption,
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontSize: 16,
+                              ),
+                            ),
+                            const SizedBox(height: 8),
+                            if (postCreatedAt != null)
+                              Text(
+                                timeago.format(postCreatedAt.toDate(),
+                                    locale: 'ja'),
+                                style: TextStyle(
+                                  color: Colors.white.withOpacity(0.6),
+                                  fontSize: 12,
+                                ),
+                              ),
+                            const SizedBox(height: 16),
+                            Row(
+                              children: [
+                                IconButton(
+                                  icon: Icon(
+                                    _isLiked
+                                        ? Icons.favorite
+                                        : Icons.favorite_border,
+                                    color: _isLiked
+                                        ? Colors.red
+                                        : const Color(0xFF00F7FF),
+                                  ),
+                                  onPressed: _isLoading ? null : _toggleLike,
+                                ),
+                                StreamBuilder<QuerySnapshot>(
+                                  stream: FirebaseFirestore.instance
+                                      .collection('posts')
+                                      .doc(widget.postId)
+                                      .collection('likes')
+                                      .snapshots(),
+                                  builder: (context, snapshot) {
+                                    final likesCount =
+                                        snapshot.data?.docs.length ?? 0;
+                                    return Text(
+                                      '$likesCount件のいいね',
+                                      style: const TextStyle(
+                                        color: Colors.white,
+                                      ),
+                                    );
+                                  },
+                                ),
+                              ],
+                            ),
+                          ],
                         ),
                       ),
                     ],
-                    const SizedBox(height: 12),
-                    Text(caption),
-                    const SizedBox(height: 8),
-                    if (postCreatedAt != null)
-                      Text(
-                        timeago.format(postCreatedAt.toDate(), locale: 'ja'),
-                        style: TextStyle(color: Colors.grey[600], fontSize: 12),
-                      ),
-                    const SizedBox(height: 16),
-                    Row(
-                      children: [
-                        IconButton(
-                          icon: Icon(
-                            _isLiked ? Icons.favorite : Icons.favorite_border,
-                            color: _isLiked ? Colors.red : null,
-                          ),
-                          onPressed: _isLoading ? null : _toggleLike,
-                        ),
-                        StreamBuilder<QuerySnapshot>(
-                          stream:
-                              FirebaseFirestore.instance
-                                  .collection('posts')
-                                  .doc(widget.postId)
-                                  .collection('likes')
-                                  .snapshots(),
-                          builder: (context, snapshot) {
-                            final likesCount = snapshot.data?.docs.length ?? 0;
-                            return Text('$likesCount件のいいね');
-                          },
-                        ),
-                      ],
-                    ),
-                  ],
+                  ),
                 ),
-              ),
-              const Divider(height: 0),
-              Padding(
-                padding: const EdgeInsets.all(16),
-                child: Row(
-                  children: [
-                    Expanded(
-                      child: TextField(
-                        controller: _commentController,
-                        decoration: const InputDecoration(
-                          hintText: 'コメントを追加...',
-                          border: OutlineInputBorder(),
-                        ),
-                        maxLines: null,
-                      ),
+                Container(
+                  margin: const EdgeInsets.all(16),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF1A1B3F).withOpacity(0.5),
+                    borderRadius: BorderRadius.circular(15),
+                    border: Border.all(
+                      color: const Color(0xFF00F7FF),
+                      width: 1,
                     ),
-                    const SizedBox(width: 8),
-                    IconButton(
-                      icon: const Icon(Icons.send),
-                      onPressed: _isLoading ? null : _addComment,
-                    ),
-                  ],
-                ),
-              ),
-              StreamBuilder<QuerySnapshot>(
-                stream:
-                    FirebaseFirestore.instance
-                        .collection('posts')
-                        .doc(widget.postId)
-                        .collection('comments')
-                        .orderBy('createdAt', descending: true)
-                        .snapshots(),
-                builder: (context, snapshot) {
-                  if (snapshot.connectionState == ConnectionState.waiting) {
-                    return const Center(child: CircularProgressIndicator());
-                  }
-
-                  final comments = snapshot.data?.docs ?? [];
-
-                  return ListView.builder(
-                    shrinkWrap: true,
-                    physics: const NeverScrollableScrollPhysics(),
-                    itemCount: comments.length,
-                    itemBuilder: (context, index) {
-                      final comment =
-                          comments[index].data() as Map<String, dynamic>;
-                      final commentUserId = comment['userId'] as String;
-                      final commentText = comment['comment'] as String;
-                      final commentCreatedAt =
-                          comment['createdAt'] as Timestamp?;
-
-                      return FutureBuilder<DocumentSnapshot>(
-                        future:
-                            FirebaseFirestore.instance
-                                .collection('users')
-                                .doc(commentUserId)
-                                .get(),
-                        builder: (context, userSnapshot) {
-                          final commentUserData =
-                              userSnapshot.data?.data()
-                                  as Map<String, dynamic>?;
-                          final commentUserName =
-                              commentUserData?['displayName'] as String? ??
-                              '不明なユーザー';
-                          final commentUserPhotoUrl =
-                              commentUserData?['photoUrl'] as String?;
-
-                          final currentUser = FirebaseAuth.instance.currentUser;
-                          final isCommentOwner =
-                              currentUser?.uid == commentUserId;
-
-                          return ListTile(
-                            leading: CircleAvatar(
-                              radius: 16,
-                              backgroundImage:
-                                  commentUserPhotoUrl != null
-                                      ? NetworkImage(commentUserPhotoUrl)
-                                      : const AssetImage(
-                                            'assets/default_profile.png',
-                                          )
-                                          as ImageProvider,
+                  ),
+                  child: Row(
+                    children: [
+                      Expanded(
+                        child: TextField(
+                          controller: _commentController,
+                          style: const TextStyle(color: Colors.white),
+                          decoration: InputDecoration(
+                            hintText: 'コメントを追加...',
+                            hintStyle: TextStyle(
+                              color: Colors.white.withOpacity(0.6),
                             ),
-                            title: Text(commentUserName),
-                            subtitle: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(commentText),
-                                if (commentCreatedAt != null)
-                                  Text(
-                                    timeago.format(
-                                      commentCreatedAt.toDate(),
-                                      locale: 'ja',
-                                    ),
-                                    style: TextStyle(
-                                      color: Colors.grey[600],
-                                      fontSize: 12,
+                            border: InputBorder.none,
+                            enabledBorder: InputBorder.none,
+                            focusedBorder: InputBorder.none,
+                          ),
+                          maxLines: null,
+                        ),
+                      ),
+                      IconButton(
+                        icon: const Icon(
+                          Icons.send,
+                          color: Color(0xFF00F7FF),
+                        ),
+                        onPressed: _isLoading ? null : _addComment,
+                      ),
+                    ],
+                  ),
+                ),
+                StreamBuilder<QuerySnapshot>(
+                  stream: FirebaseFirestore.instance
+                      .collection('posts')
+                      .doc(widget.postId)
+                      .collection('comments')
+                      .orderBy('createdAt', descending: true)
+                      .snapshots(),
+                  builder: (context, snapshot) {
+                    if (snapshot.connectionState == ConnectionState.waiting) {
+                      return const Center(
+                        child: CircularProgressIndicator(
+                          color: Color(0xFF00F7FF),
+                        ),
+                      );
+                    }
+
+                    final comments = snapshot.data?.docs ?? [];
+
+                    return ListView.builder(
+                      shrinkWrap: true,
+                      physics: const NeverScrollableScrollPhysics(),
+                      itemCount: comments.length,
+                      itemBuilder: (context, index) {
+                        final comment =
+                            comments[index].data() as Map<String, dynamic>;
+                        final commentUserId = comment['userId'] as String;
+                        final commentText = comment['comment'] as String;
+                        final commentCreatedAt =
+                            comment['createdAt'] as Timestamp?;
+
+                        return FutureBuilder<DocumentSnapshot>(
+                          future: FirebaseFirestore.instance
+                              .collection('users')
+                              .doc(commentUserId)
+                              .get(),
+                          builder: (context, userSnapshot) {
+                            final commentUserData = userSnapshot.data?.data()
+                                as Map<String, dynamic>?;
+                            final commentUserName =
+                                commentUserData?['displayName'] as String? ??
+                                    '不明なユーザー';
+                            final commentUserPhotoUrl =
+                                commentUserData?['photoUrl'] as String?;
+
+                            final currentUser =
+                                FirebaseAuth.instance.currentUser;
+                            final isCommentOwner =
+                                currentUser?.uid == commentUserId;
+
+                            return Container(
+                              margin: const EdgeInsets.symmetric(
+                                horizontal: 16,
+                                vertical: 8,
+                              ),
+                              decoration: BoxDecoration(
+                                color: const Color(0xFF1A1B3F).withOpacity(0.3),
+                                borderRadius: BorderRadius.circular(12),
+                                border: Border.all(
+                                  color:
+                                      const Color(0xFF00F7FF).withOpacity(0.3),
+                                  width: 1,
+                                ),
+                              ),
+                              child: ListTile(
+                                leading: Container(
+                                  decoration: BoxDecoration(
+                                    shape: BoxShape.circle,
+                                    border: Border.all(
+                                      color: const Color(0xFF00F7FF),
+                                      width: 1,
                                     ),
                                   ),
-                              ],
-                            ),
-                            trailing:
-                                isCommentOwner
+                                  child: CircleAvatar(
+                                    radius: 16,
+                                    backgroundImage: commentUserPhotoUrl != null
+                                        ? NetworkImage(commentUserPhotoUrl)
+                                        : const AssetImage(
+                                            'assets/default_profile.png',
+                                          ) as ImageProvider,
+                                  ),
+                                ),
+                                title: Text(
+                                  commentUserName,
+                                  style: const TextStyle(
+                                    color: Colors.white,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                                subtitle: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      commentText,
+                                      style: const TextStyle(
+                                        color: Colors.white70,
+                                      ),
+                                    ),
+                                    if (commentCreatedAt != null)
+                                      Text(
+                                        timeago.format(
+                                          commentCreatedAt.toDate(),
+                                          locale: 'ja',
+                                        ),
+                                        style: TextStyle(
+                                          color: Colors.white.withOpacity(0.4),
+                                          fontSize: 12,
+                                        ),
+                                      ),
+                                  ],
+                                ),
+                                trailing: isCommentOwner
                                     ? IconButton(
-                                      icon: const Icon(Icons.delete_outline),
-                                      onPressed:
-                                          () => _deleteComment(
-                                            comments[index].id,
-                                          ),
-                                    )
+                                        icon: const Icon(
+                                          Icons.delete_outline,
+                                          color: Color(0xFF00F7FF),
+                                        ),
+                                        onPressed: () =>
+                                            _deleteComment(comments[index].id),
+                                      )
                                     : null,
-                          );
-                        },
-                      );
-                    },
-                  );
-                },
-              ),
-            ],
-          );
-        },
+                              ),
+                            );
+                          },
+                        );
+                      },
+                    );
+                  },
+                ),
+                const SizedBox(height: 16),
+              ],
+            );
+          },
+        ),
       ),
     );
   }

@@ -7,6 +7,7 @@ import 'tabs/message_tab.dart';
 import 'tabs/profile_tab.dart';
 import 'tabs/info_tab.dart';
 import 'posts/post_image_picker_screen.dart';
+import 'image_picker_screen.dart';
 
 class HomeScreen extends ConsumerStatefulWidget {
   const HomeScreen({super.key});
@@ -26,57 +27,285 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     const ProfileTab(),
   ];
 
-  void _showPostImagePickerScreen() {
-    Navigator.of(context).push(
-      MaterialPageRoute(builder: (context) => const PostImagePickerScreen()),
+  void _showCreateOptionsModal() {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      builder: (BuildContext context) {
+        return Container(
+          decoration: BoxDecoration(
+            gradient: const LinearGradient(
+              begin: Alignment.topCenter,
+              end: Alignment.bottomCenter,
+              colors: [
+                Color(0xFF1A1B3F),
+                Color(0xFF0B1221),
+              ],
+            ),
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+            border: Border.all(
+              color: const Color(0xFF00F7FF),
+              width: 1,
+            ),
+            boxShadow: [
+              BoxShadow(
+                color: const Color(0xFF00F7FF).withOpacity(0.2),
+                blurRadius: 10,
+                spreadRadius: -5,
+              ),
+            ],
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                margin: const EdgeInsets.only(top: 8),
+                width: 40,
+                height: 4,
+                decoration: BoxDecoration(
+                  color: const Color(0xFF00F7FF).withOpacity(0.5),
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
+              ListTile(
+                leading: Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    border: Border.all(
+                      color: const Color(0xFF00F7FF),
+                      width: 1,
+                    ),
+                  ),
+                  child: const Icon(
+                    Icons.photo_camera,
+                    color: Color(0xFF00F7FF),
+                  ),
+                ),
+                title: const Text(
+                  '投稿を作成',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                onTap: () {
+                  Navigator.pop(context);
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => const PostImagePickerScreen(),
+                    ),
+                  );
+                },
+              ),
+              ListTile(
+                leading: Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    border: Border.all(
+                      color: const Color(0xFF00F7FF),
+                      width: 1,
+                    ),
+                  ),
+                  child: const Icon(
+                    Icons.event,
+                    color: Color(0xFF00F7FF),
+                  ),
+                ),
+                title: const Text(
+                  'イベントを作成',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                onTap: () {
+                  Navigator.pop(context);
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => const ImagePickerScreen(),
+                    ),
+                  );
+                },
+              ),
+              const SizedBox(height: 16),
+            ],
+          ),
+        );
+      },
     );
   }
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      body: _tabs[_currentIndex],
-      bottomNavigationBar: NavigationBar(
-        selectedIndex: _currentIndex,
-        onDestinationSelected: (index) {
-          setState(() {
-            _currentIndex = index;
-          });
-        },
-        destinations: const [
-          NavigationDestination(
-            icon: Icon(Icons.home_outlined),
-            selectedIcon: Icon(Icons.home),
-            label: 'ホーム',
-          ),
-          NavigationDestination(
-            icon: Icon(Icons.event_outlined),
-            selectedIcon: Icon(Icons.event),
-            label: 'イベント',
-          ),
-          NavigationDestination(
-            icon: Icon(Icons.work_outline),
-            selectedIcon: Icon(Icons.work),
-            label: '仕事',
-          ),
-          NavigationDestination(
-            icon: Icon(Icons.info_outline),
-            selectedIcon: Icon(Icons.info),
-            label: '情報',
-          ),
-          NavigationDestination(
-            icon: Icon(Icons.person_outline),
-            selectedIcon: Icon(Icons.person),
-            label: 'プロフィール',
-          ),
-        ],
+    return Container(
+      decoration: const BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topCenter,
+          end: Alignment.bottomCenter,
+          colors: [
+            Color(0xFF0B1221),
+            Color(0xFF1A1B3F),
+            Color(0xFF0B1221),
+          ],
+        ),
       ),
-      floatingActionButton: _currentIndex != 1
-          ? FloatingActionButton(
-              onPressed: _showPostImagePickerScreen,
-              child: const Icon(Icons.add),
-            )
-          : null,
+      child: Scaffold(
+        backgroundColor: Colors.transparent,
+        body: _tabs[_currentIndex],
+        bottomNavigationBar: NavigationBarTheme(
+          data: NavigationBarThemeData(
+            labelTextStyle:
+                MaterialStateProperty.resolveWith<TextStyle>((states) {
+              final isSelected = states.contains(MaterialState.selected);
+              return TextStyle(
+                color:
+                    isSelected ? Colors.white : Colors.white.withOpacity(0.5),
+                fontSize: 12,
+              );
+            }),
+            height: 65,
+            surfaceTintColor: Colors.transparent,
+            indicatorColor: Colors.transparent,
+            backgroundColor: Colors.transparent,
+          ),
+          child: Container(
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
+                colors: [
+                  const Color(0xFF1A1B3F).withOpacity(0.8),
+                  const Color(0xFF0B1221),
+                ],
+              ),
+              border: const Border(
+                top: BorderSide(
+                  color: Color(0xFF00F7FF),
+                  width: 1,
+                ),
+              ),
+              boxShadow: [
+                BoxShadow(
+                  color: const Color(0xFF00F7FF).withOpacity(0.2),
+                  blurRadius: 10,
+                  spreadRadius: -5,
+                  offset: const Offset(0, -5),
+                ),
+              ],
+            ),
+            child: NavigationBar(
+              backgroundColor: Colors.transparent,
+              elevation: 0,
+              selectedIndex: _currentIndex,
+              onDestinationSelected: (index) {
+                setState(() {
+                  _currentIndex = index;
+                });
+              },
+              labelBehavior: NavigationDestinationLabelBehavior.alwaysShow,
+              destinations: [
+                _buildNavDestination(
+                  Icons.home_outlined,
+                  Icons.home,
+                  'ホーム',
+                  0,
+                ),
+                _buildNavDestination(
+                  Icons.event_outlined,
+                  Icons.event,
+                  'イベント',
+                  1,
+                ),
+                _buildNavDestination(
+                  Icons.work_outline,
+                  Icons.work,
+                  '仕事',
+                  2,
+                ),
+                _buildNavDestination(
+                  Icons.info_outline,
+                  Icons.info,
+                  '情報',
+                  3,
+                ),
+                _buildNavDestination(
+                  Icons.person_outline,
+                  Icons.person,
+                  'プロフィール',
+                  4,
+                ),
+              ],
+            ),
+          ),
+        ),
+        floatingActionButton: Container(
+          decoration: BoxDecoration(
+            shape: BoxShape.circle,
+            boxShadow: [
+              BoxShadow(
+                color: const Color(0xFF00F7FF).withOpacity(0.4),
+                blurRadius: 15,
+                spreadRadius: 2,
+              ),
+            ],
+          ),
+          child: FloatingActionButton(
+            onPressed: _showCreateOptionsModal,
+            backgroundColor: const Color(0xFF1A1B3F),
+            child: Container(
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                border: Border.all(
+                  color: const Color(0xFF00F7FF),
+                  width: 2,
+                ),
+              ),
+              child: const Icon(
+                Icons.add,
+                color: Color(0xFF00F7FF),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  NavigationDestination _buildNavDestination(
+    IconData outlinedIcon,
+    IconData filledIcon,
+    String label,
+    int index,
+  ) {
+    final isSelected = _currentIndex == index;
+    return NavigationDestination(
+      icon: Icon(
+        outlinedIcon,
+        color: isSelected
+            ? const Color(0xFF00F7FF)
+            : const Color(0xFF00F7FF).withOpacity(0.5),
+      ),
+      selectedIcon: ShaderMask(
+        shaderCallback: (Rect bounds) {
+          return LinearGradient(
+            colors: [
+              const Color(0xFF00F7FF),
+              const Color(0xFF00F7FF).withOpacity(0.7),
+            ],
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+          ).createShader(bounds);
+        },
+        child: Icon(
+          filledIcon,
+          color: Colors.white,
+        ),
+      ),
+      label: label,
     );
   }
 }

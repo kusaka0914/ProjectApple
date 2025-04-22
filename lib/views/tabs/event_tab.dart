@@ -26,22 +26,21 @@ class _EventTabState extends State<EventTab> {
 
   Future<void> _loadEvents() async {
     print('Loading events for month: ${_focusedDay.month}');
-    final eventsSnapshot =
-        await FirebaseFirestore.instance
-            .collection('events')
-            .where(
-              'date',
-              isGreaterThanOrEqualTo: Timestamp.fromDate(
-                DateTime(_focusedDay.year, _focusedDay.month, 1),
-              ),
-            )
-            .where(
-              'date',
-              isLessThan: Timestamp.fromDate(
-                DateTime(_focusedDay.year, _focusedDay.month + 1, 1),
-              ),
-            )
-            .get();
+    final eventsSnapshot = await FirebaseFirestore.instance
+        .collection('events')
+        .where(
+          'date',
+          isGreaterThanOrEqualTo: Timestamp.fromDate(
+            DateTime(_focusedDay.year, _focusedDay.month, 1),
+          ),
+        )
+        .where(
+          'date',
+          isLessThan: Timestamp.fromDate(
+            DateTime(_focusedDay.year, _focusedDay.month + 1, 1),
+          ),
+        )
+        .get();
 
     print('Found ${eventsSnapshot.docs.length} events');
     final newEvents = <DateTime, List<Event>>{};
@@ -77,85 +76,161 @@ class _EventTabState extends State<EventTab> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: Column(
-        children: [
-          const SizedBox(height: 48),
-          TableCalendar(
-            firstDay: DateTime.utc(2024, 1, 1),
-            lastDay: DateTime.utc(2025, 12, 31),
-            focusedDay: _focusedDay,
-            selectedDayPredicate: (day) => isSameDay(_selectedDay, day),
-            onDaySelected: (selectedDay, focusedDay) {
-              setState(() {
-                _selectedDay = selectedDay;
-                _focusedDay = focusedDay;
-              });
-            },
-            onPageChanged: (focusedDay) {
-              _focusedDay = focusedDay;
-              _loadEvents();
-            },
-            eventLoader: _getEventsForDay,
-            calendarStyle: CalendarStyle(
-              markersMaxCount: 1,
-              markerDecoration: BoxDecoration(
-                color: Colors.blue,
-                shape: BoxShape.circle,
+      backgroundColor: Colors.transparent,
+      body: Container(
+        decoration: const BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+            colors: [
+              Color(0xFF0B1221),
+              Color(0xFF1A1B3F),
+            ],
+          ),
+        ),
+        child: Column(
+          children: [
+            const SizedBox(height: 48),
+            Container(
+              margin: const EdgeInsets.symmetric(horizontal: 16),
+              decoration: BoxDecoration(
+                color: const Color(0xFF1A1B3F),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(
+                  color: const Color(0xFF00F7FF),
+                  width: 1,
+                ),
+                boxShadow: [
+                  BoxShadow(
+                    color: const Color(0xFF00F7FF).withOpacity(0.2),
+                    blurRadius: 10,
+                    spreadRadius: -5,
+                  ),
+                ],
               ),
-              markerSize: 8,
-              selectedDecoration: BoxDecoration(
-                color: Colors.blue,
-                shape: BoxShape.circle,
-              ),
-              todayDecoration: BoxDecoration(
-                color: Colors.blue.withOpacity(0.3),
-                shape: BoxShape.circle,
-              ),
-              markersAlignment: Alignment.bottomCenter,
-              markerMargin: EdgeInsets.only(top: 8),
-            ),
-            calendarBuilders: CalendarBuilders(
-              markerBuilder: (context, date, events) {
-                if (events.isEmpty) return null;
-                return Container(
-                  margin: const EdgeInsets.only(top: 20),
-                  padding: const EdgeInsets.all(1),
-                  child: Container(
-                    width: 8,
-                    height: 8,
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      color: Colors.blue,
+              child: TableCalendar(
+                firstDay: DateTime.utc(2024, 1, 1),
+                lastDay: DateTime.utc(2025, 12, 31),
+                focusedDay: _focusedDay,
+                selectedDayPredicate: (day) => isSameDay(_selectedDay, day),
+                onDaySelected: (selectedDay, focusedDay) {
+                  setState(() {
+                    _selectedDay = selectedDay;
+                    _focusedDay = focusedDay;
+                  });
+                },
+                onPageChanged: (focusedDay) {
+                  _focusedDay = focusedDay;
+                  _loadEvents();
+                },
+                eventLoader: _getEventsForDay,
+                calendarStyle: CalendarStyle(
+                  markersMaxCount: 1,
+                  markerDecoration: BoxDecoration(
+                    color: Color(0xFF00F7FF),
+                    shape: BoxShape.circle,
+                  ),
+                  markerSize: 8,
+                  selectedDecoration: BoxDecoration(
+                    color: Color(0xFF00F7FF),
+                    shape: BoxShape.circle,
+                  ),
+                  todayDecoration: BoxDecoration(
+                    color: Color(0xFF1A1B3F),
+                    shape: BoxShape.circle,
+                    border: Border.all(
+                      color: Color(0xFF00F7FF),
+                      width: 1,
                     ),
                   ),
-                );
-              },
+                  defaultTextStyle: TextStyle(color: Colors.white),
+                  weekendTextStyle: TextStyle(color: Colors.white70),
+                  selectedTextStyle: TextStyle(color: Colors.black),
+                  todayTextStyle: TextStyle(color: Color(0xFF00F7FF)),
+                  outsideTextStyle: TextStyle(color: Colors.white38),
+                  markersAlignment: Alignment.bottomCenter,
+                  markerMargin: EdgeInsets.only(top: 8),
+                ),
+                headerStyle: const HeaderStyle(
+                  titleTextStyle: TextStyle(
+                    color: Colors.white,
+                    fontSize: 17,
+                  ),
+                  formatButtonVisible: false,
+                  leftChevronIcon: Icon(
+                    Icons.chevron_left,
+                    color: Color(0xFF00F7FF),
+                  ),
+                  rightChevronIcon: Icon(
+                    Icons.chevron_right,
+                    color: Color(0xFF00F7FF),
+                  ),
+                ),
+                daysOfWeekStyle: const DaysOfWeekStyle(
+                  weekdayStyle: TextStyle(color: Colors.white70),
+                  weekendStyle: TextStyle(color: Colors.white70),
+                ),
+                calendarBuilders: CalendarBuilders(
+                  markerBuilder: (context, date, events) {
+                    if (events.isEmpty) return null;
+                    return Container(
+                      margin: const EdgeInsets.only(top: 20),
+                      padding: const EdgeInsets.all(1),
+                      child: Container(
+                        width: 8,
+                        height: 8,
+                        decoration: const BoxDecoration(
+                          shape: BoxShape.circle,
+                          color: Color(0xFF00F7FF),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Color(0xFF00F7FF),
+                              blurRadius: 4,
+                              spreadRadius: 1,
+                            ),
+                          ],
+                        ),
+                      ),
+                    );
+                  },
+                ),
+              ),
             ),
-          ),
-          const Divider(),
-          Expanded(
-            child:
-                _selectedDay == null
-                    ? const Center(child: Text('日付を選択してください'))
-                    : _buildEventList(_getEventsForDay(_selectedDay!)),
-          ),
-        ],
-      ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () {
-          Navigator.push(
-            context,
-            MaterialPageRoute(builder: (context) => const ImagePickerScreen()),
-          );
-        },
-        child: const Icon(Icons.add),
+            const Divider(
+              color: Color(0xFF00F7FF),
+              thickness: 0.5,
+              height: 32,
+            ),
+            Expanded(
+              child: _selectedDay == null
+                  ? const Center(
+                      child: Text(
+                        '日付を選択してください',
+                        style: TextStyle(
+                          color: Colors.white70,
+                          fontSize: 16,
+                        ),
+                      ),
+                    )
+                  : _buildEventList(_getEventsForDay(_selectedDay!)),
+            ),
+          ],
+        ),
       ),
     );
   }
 
   Widget _buildEventList(List<Event> events) {
     if (events.isEmpty) {
-      return const Center(child: Text('イベントはありません'));
+      return const Center(
+        child: Text(
+          'イベントはありません',
+          style: TextStyle(
+            color: Colors.white70,
+            fontSize: 16,
+          ),
+        ),
+      );
     }
 
     return ListView.builder(
@@ -163,8 +238,23 @@ class _EventTabState extends State<EventTab> {
       itemBuilder: (context, index) {
         final event = events[index];
         final eventDate = event.date.toDate();
-        return Card(
+        return Container(
           margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+          decoration: BoxDecoration(
+            color: const Color(0xFF1A1B3F),
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(
+              color: const Color(0xFF00F7FF),
+              width: 1,
+            ),
+            boxShadow: [
+              BoxShadow(
+                color: const Color(0xFF00F7FF).withOpacity(0.1),
+                blurRadius: 8,
+                spreadRadius: -4,
+              ),
+            ],
+          ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -173,28 +263,39 @@ class _EventTabState extends State<EventTab> {
                 child: Row(
                   children: [
                     FutureBuilder<DocumentSnapshot>(
-                      future:
-                          FirebaseFirestore.instance
-                              .collection('users')
-                              .doc(event.userId)
-                              .get(),
+                      future: FirebaseFirestore.instance
+                          .collection('users')
+                          .doc(event.userId)
+                          .get(),
                       builder: (context, snapshot) {
                         if (!snapshot.hasData) {
                           return const CircleAvatar(
                             radius: 16,
-                            child: Icon(Icons.person, size: 20),
+                            backgroundColor: Color(0xFF1A1B3F),
+                            child: Icon(
+                              Icons.person,
+                              size: 20,
+                              color: Color(0xFF00F7FF),
+                            ),
                           );
                         }
                         final userData =
                             snapshot.data!.data() as Map<String, dynamic>?;
                         return Row(
                           children: [
-                            CircleAvatar(
-                              radius: 16,
-                              backgroundColor: Colors.grey[200],
-                              child:
-                                  userData?['photoUrl'] != null
-                                      ? ClipOval(
+                            Container(
+                              decoration: BoxDecoration(
+                                shape: BoxShape.circle,
+                                border: Border.all(
+                                  color: const Color(0xFF00F7FF),
+                                  width: 1,
+                                ),
+                              ),
+                              child: CircleAvatar(
+                                radius: 16,
+                                backgroundColor: const Color(0xFF1A1B3F),
+                                child: userData?['photoUrl'] != null
+                                    ? ClipOval(
                                         child: Image.network(
                                           userData!['photoUrl'],
                                           width: 32,
@@ -203,12 +304,18 @@ class _EventTabState extends State<EventTab> {
                                           errorBuilder:
                                               (context, error, stackTrace) =>
                                                   const Icon(
-                                                    Icons.person,
-                                                    size: 20,
-                                                  ),
+                                            Icons.person,
+                                            size: 20,
+                                            color: Color(0xFF00F7FF),
+                                          ),
                                         ),
                                       )
-                                      : const Icon(Icons.person, size: 20),
+                                    : const Icon(
+                                        Icons.person,
+                                        size: 20,
+                                        color: Color(0xFF00F7FF),
+                                      ),
+                              ),
                             ),
                             const SizedBox(width: 8),
                             Text(
@@ -216,6 +323,7 @@ class _EventTabState extends State<EventTab> {
                               style: const TextStyle(
                                 fontSize: 14,
                                 fontWeight: FontWeight.w500,
+                                color: Colors.white,
                               ),
                             ),
                           ],
@@ -225,27 +333,7 @@ class _EventTabState extends State<EventTab> {
                   ],
                 ),
               ),
-              ListTile(
-                title: Text(event.title),
-                subtitle: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(_formatDate(eventDate)),
-                    Text('参加予定: ${event.participantsCount}人'),
-                    if (event.visibleParticipantIds.isNotEmpty)
-                      FutureBuilder<List<String>>(
-                        future: _loadParticipantNames(
-                          event.visibleParticipantIds,
-                        ),
-                        builder: (context, snapshot) {
-                          if (!snapshot.hasData) {
-                            return const SizedBox.shrink();
-                          }
-                          return Text('参加者: ${snapshot.data!.join(", ")}');
-                        },
-                      ),
-                  ],
-                ),
+              InkWell(
                 onTap: () {
                   Navigator.push(
                     context,
@@ -254,6 +342,56 @@ class _EventTabState extends State<EventTab> {
                     ),
                   );
                 },
+                child: Padding(
+                  padding: const EdgeInsets.all(16),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        event.title,
+                        style: const TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.white,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        _formatDate(eventDate),
+                        style: const TextStyle(
+                          fontSize: 14,
+                          color: Color(0xFF00F7FF),
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        '参加予定: ${event.participantsCount}人',
+                        style: const TextStyle(
+                          fontSize: 14,
+                          color: Colors.white70,
+                        ),
+                      ),
+                      if (event.visibleParticipantIds.isNotEmpty)
+                        FutureBuilder<List<String>>(
+                          future: _loadParticipantNames(
+                            event.visibleParticipantIds,
+                          ),
+                          builder: (context, snapshot) {
+                            if (!snapshot.hasData) {
+                              return const SizedBox.shrink();
+                            }
+                            return Text(
+                              '参加者: ${snapshot.data!.join(", ")}',
+                              style: const TextStyle(
+                                fontSize: 14,
+                                color: Colors.white70,
+                              ),
+                            );
+                          },
+                        ),
+                    ],
+                  ),
+                ),
               ),
             ],
           ),

@@ -219,13 +219,40 @@ class _MessageDetailScreenState extends State<MessageDetailScreen> {
   Widget build(BuildContext context) {
     final currentUserId = FirebaseAuth.instance.currentUser?.uid;
     if (currentUserId == null) {
-      return const Scaffold(body: Center(child: Text('ログインが必要です')));
+      return Scaffold(
+        body: Container(
+          decoration: const BoxDecoration(
+            gradient: LinearGradient(
+              begin: Alignment.topCenter,
+              end: Alignment.bottomCenter,
+              colors: [
+                Color(0xFF0B1221),
+                Color(0xFF1A1B3F),
+              ],
+            ),
+          ),
+          child: const Center(
+            child: Text(
+              'ログインが必要です',
+              style: TextStyle(color: Colors.white),
+            ),
+          ),
+        ),
+      );
     }
 
     return Scaffold(
+      backgroundColor: Colors.transparent,
       appBar: AppBar(
+        backgroundColor: const Color(0xFF1A1B3F),
         title: widget.isOpenChat
-            ? const Text('みんなのチャット')
+            ? const Text(
+                'みんなのチャット',
+                style: TextStyle(
+                  color: Colors.white,
+                  fontWeight: FontWeight.bold,
+                ),
+              )
             : StreamBuilder<DocumentSnapshot>(
                 stream: FirebaseFirestore.instance
                     .collection('messages')
@@ -233,26 +260,50 @@ class _MessageDetailScreenState extends State<MessageDetailScreen> {
                     .snapshots(),
                 builder: (context, snapshot) {
                   if (!snapshot.hasData || !snapshot.data!.exists) {
-                    return const Text('メッセージが存在しません');
+                    return const Text(
+                      'メッセージが存在しません',
+                      style: TextStyle(color: Colors.white),
+                    );
                   }
                   final message = Message.fromFirestore(snapshot.data!);
                   final displayName = message.senderId == currentUserId
                       ? message.receiverName
                       : message.senderName;
-                  return Text(displayName);
+                  return Text(
+                    displayName,
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  );
                 },
               ),
       ),
-      backgroundColor: Colors.grey[100],
-      body: SafeArea(
-        child: _buildBody(),
+      body: Container(
+        decoration: const BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+            colors: [
+              Color(0xFF0B1221),
+              Color(0xFF1A1B3F),
+            ],
+          ),
+        ),
+        child: SafeArea(
+          child: _buildBody(),
+        ),
       ),
     );
   }
 
   Widget _buildBody() {
     if (_isLoading) {
-      return const Center(child: CircularProgressIndicator());
+      return const Center(
+        child: CircularProgressIndicator(
+          color: Color(0xFF00F7FF),
+        ),
+      );
     }
 
     if (_hasError) {
@@ -262,17 +313,37 @@ class _MessageDetailScreenState extends State<MessageDetailScreen> {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              const Icon(Icons.error_outline, size: 48, color: Colors.red),
+              const Icon(
+                Icons.error_outline,
+                size: 48,
+                color: Color(0xFF00F7FF),
+              ),
               const SizedBox(height: 16),
               const Text(
                 'メッセージの読み込みに失敗しました',
-                style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.white,
+                ),
               ),
               const SizedBox(height: 16),
               ElevatedButton.icon(
                 onPressed: _startListening,
-                icon: const Icon(Icons.refresh),
-                label: const Text('再読み込み'),
+                icon: const Icon(Icons.refresh, color: Colors.black),
+                label: const Text(
+                  '再読み込み',
+                  style: TextStyle(
+                    color: Colors.black,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFF00F7FF),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                ),
               ),
             ],
           ),
@@ -280,153 +351,209 @@ class _MessageDetailScreenState extends State<MessageDetailScreen> {
       );
     }
 
-    return Container(
-      color: Colors.white,
-      child: Column(
-        children: [
-          Expanded(
-            child: StreamBuilder<QuerySnapshot>(
-              stream: FirebaseFirestore.instance
-                  .collection('messages')
-                  .doc(widget.messageId)
-                  .collection('chat')
-                  .orderBy('createdAt', descending: true)
-                  .snapshots(),
-              builder: (context, snapshot) {
-                if (snapshot.hasError) {
-                  print('Error in message detail: ${snapshot.error}');
-                  return Center(
-                    child: Padding(
-                      padding: const EdgeInsets.all(16),
-                      child: Column(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          const Icon(
-                            Icons.error_outline,
-                            size: 48,
-                            color: Colors.red,
+    return Column(
+      children: [
+        Expanded(
+          child: StreamBuilder<QuerySnapshot>(
+            stream: FirebaseFirestore.instance
+                .collection('messages')
+                .doc(widget.messageId)
+                .collection('chat')
+                .orderBy('createdAt', descending: true)
+                .snapshots(),
+            builder: (context, snapshot) {
+              if (snapshot.hasError) {
+                print('Error in message detail: ${snapshot.error}');
+                return Center(
+                  child: Padding(
+                    padding: const EdgeInsets.all(16),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        const Icon(
+                          Icons.error_outline,
+                          size: 48,
+                          color: Color(0xFF00F7FF),
+                        ),
+                        const SizedBox(height: 16),
+                        const Text(
+                          'メッセージの読み込みに失敗しました',
+                          textAlign: TextAlign.center,
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.white,
                           ),
-                          const SizedBox(height: 16),
-                          const Text(
-                            'メッセージの読み込みに失敗しました',
-                            textAlign: TextAlign.center,
-                            style: TextStyle(
-                              fontSize: 16,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                        ],
-                      ),
+                        ),
+                      ],
                     ),
-                  );
-                }
+                  ),
+                );
+              }
 
-                if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
-                  return const Center(
-                    child: Text('メッセージがありません'),
-                  );
-                }
+              if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
+                return const Center(
+                  child: Text(
+                    'メッセージがありません',
+                    style: TextStyle(color: Colors.white70),
+                  ),
+                );
+              }
 
-                return ListView.builder(
-                  reverse: true,
-                  padding: const EdgeInsets.all(16),
-                  itemCount: snapshot.data!.docs.length,
-                  itemBuilder: (context, index) {
-                    final doc = snapshot.data!.docs[index];
-                    final data = doc.data() as Map<String, dynamic>;
-                    final isCurrentUser = data['senderId'] == currentUserId;
-                    final timestamp = data['createdAt'] as Timestamp?;
+              return ListView.builder(
+                reverse: true,
+                padding: const EdgeInsets.all(16),
+                itemCount: snapshot.data!.docs.length,
+                itemBuilder: (context, index) {
+                  final doc = snapshot.data!.docs[index];
+                  final data = doc.data() as Map<String, dynamic>;
+                  final isCurrentUser = data['senderId'] == currentUserId;
+                  final timestamp = data['createdAt'] as Timestamp?;
 
-                    return Padding(
-                      padding: const EdgeInsets.only(bottom: 8),
-                      child: Row(
-                        mainAxisAlignment: isCurrentUser
-                            ? MainAxisAlignment.end
-                            : MainAxisAlignment.start,
-                        children: [
-                          if (!isCurrentUser) ...[
-                            CircleAvatar(
-                              radius: 16,
-                              child: Text(data['senderName']?[0] ?? '?'),
-                            ),
-                            const SizedBox(width: 8),
-                          ],
+                  return Padding(
+                    padding: const EdgeInsets.only(bottom: 8),
+                    child: Row(
+                      mainAxisAlignment: isCurrentUser
+                          ? MainAxisAlignment.end
+                          : MainAxisAlignment.start,
+                      children: [
+                        if (!isCurrentUser) ...[
                           Container(
-                            constraints: BoxConstraints(
-                              maxWidth: MediaQuery.of(context).size.width * 0.7,
-                            ),
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 16,
-                              vertical: 10,
-                            ),
                             decoration: BoxDecoration(
-                              color: isCurrentUser
-                                  ? Colors.blue[100]
-                                  : Colors.grey[200],
-                              borderRadius: BorderRadius.circular(20),
-                            ),
-                            child: Column(
-                              crossAxisAlignment: isCurrentUser
-                                  ? CrossAxisAlignment.end
-                                  : CrossAxisAlignment.start,
-                              children: [
-                                if (!isCurrentUser)
-                                  Padding(
-                                    padding: const EdgeInsets.only(bottom: 4),
-                                    child: Text(
-                                      data['senderName'] ?? 'Unknown',
-                                      style: const TextStyle(
-                                        fontWeight: FontWeight.bold,
-                                        fontSize: 12,
-                                      ),
-                                    ),
-                                  ),
-                                Text(data['message'] ?? ''),
-                                if (timestamp != null)
-                                  Padding(
-                                    padding: const EdgeInsets.only(top: 4),
-                                    child: Text(
-                                      _formatTimestamp(timestamp),
-                                      style: TextStyle(
-                                        fontSize: 10,
-                                        color: Colors.grey[600],
-                                      ),
-                                    ),
-                                  ),
+                              shape: BoxShape.circle,
+                              border: Border.all(
+                                color: const Color(0xFF00F7FF),
+                                width: 2,
+                              ),
+                              boxShadow: [
+                                BoxShadow(
+                                  color:
+                                      const Color(0xFF00F7FF).withOpacity(0.2),
+                                  blurRadius: 8,
+                                  spreadRadius: -2,
+                                ),
                               ],
                             ),
+                            child: CircleAvatar(
+                              radius: 16,
+                              backgroundColor: const Color(0xFF1A1B3F),
+                              child: Text(
+                                data['senderName']?[0] ?? '?',
+                                style: const TextStyle(
+                                  color: Color(0xFF00F7FF),
+                                ),
+                              ),
+                            ),
                           ),
+                          const SizedBox(width: 8),
                         ],
-                      ),
-                    );
-                  },
-                );
-              },
-            ),
+                        Container(
+                          constraints: BoxConstraints(
+                            maxWidth: MediaQuery.of(context).size.width * 0.7,
+                          ),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 16,
+                            vertical: 10,
+                          ),
+                          decoration: BoxDecoration(
+                            color: isCurrentUser
+                                ? const Color(0xFF00F7FF).withOpacity(0.1)
+                                : const Color(0xFF1A1B3F).withOpacity(0.5),
+                            borderRadius: BorderRadius.circular(20),
+                            border: Border.all(
+                              color: const Color(0xFF00F7FF),
+                              width: 1,
+                            ),
+                            boxShadow: [
+                              BoxShadow(
+                                color: const Color(0xFF00F7FF).withOpacity(0.1),
+                                blurRadius: 8,
+                                spreadRadius: -2,
+                              ),
+                            ],
+                          ),
+                          child: Column(
+                            crossAxisAlignment: isCurrentUser
+                                ? CrossAxisAlignment.end
+                                : CrossAxisAlignment.start,
+                            children: [
+                              if (!isCurrentUser)
+                                Padding(
+                                  padding: const EdgeInsets.only(bottom: 4),
+                                  // child: Text(
+                                  //   data['senderName'] ?? 'Unknown',
+                                  //   style: const TextStyle(
+                                  //     fontWeight: FontWeight.bold,
+                                  //     fontSize: 12,
+                                  //     color: Color(0xFF00F7FF),
+                                  //   ),
+                                  // ),
+                                ),
+                              Text(
+                                data['message'] ?? '',
+                                style: const TextStyle(color: Colors.white),
+                              ),
+                              if (timestamp != null)
+                                Padding(
+                                  padding: const EdgeInsets.only(top: 4),
+                                  child: Text(
+                                    _formatTimestamp(timestamp),
+                                    style: TextStyle(
+                                      fontSize: 10,
+                                      color: Colors.white.withOpacity(0.5),
+                                    ),
+                                  ),
+                                ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                  );
+                },
+              );
+            },
           ),
-          Container(
-            decoration: BoxDecoration(
-              color: Colors.white,
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withOpacity(0.1),
-                  blurRadius: 4,
-                  offset: const Offset(0, -2),
-                ),
-              ],
-            ),
-            child: Padding(
-              padding: const EdgeInsets.all(8.0),
-              child: Row(
-                children: [
-                  Expanded(
+        ),
+        Container(
+          decoration: BoxDecoration(
+            color: const Color(0xFF1A1B3F),
+            boxShadow: [
+              BoxShadow(
+                color: const Color(0xFF00F7FF).withOpacity(0.1),
+                blurRadius: 8,
+                spreadRadius: -2,
+              ),
+            ],
+          ),
+          child: Padding(
+            padding: const EdgeInsets.all(8.0),
+            child: Row(
+              children: [
+                Expanded(
+                  child: Container(
+                    decoration: BoxDecoration(
+                      color: const Color(0xFF0B1221),
+                      borderRadius: BorderRadius.circular(20),
+                      border: Border.all(
+                        color: const Color(0xFF00F7FF),
+                        width: 1,
+                      ),
+                      boxShadow: [
+                        BoxShadow(
+                          color: const Color(0xFF00F7FF).withOpacity(0.1),
+                          blurRadius: 8,
+                          spreadRadius: -2,
+                        ),
+                      ],
+                    ),
                     child: TextField(
                       controller: _messageController,
+                      style: const TextStyle(color: Colors.white),
                       decoration: const InputDecoration(
                         hintText: 'メッセージを入力',
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.all(Radius.circular(20)),
-                        ),
+                        hintStyle: TextStyle(color: Colors.white38),
+                        border: InputBorder.none,
                         contentPadding: EdgeInsets.symmetric(
                           horizontal: 16,
                           vertical: 8,
@@ -435,23 +562,45 @@ class _MessageDetailScreenState extends State<MessageDetailScreen> {
                       maxLines: null,
                     ),
                   ),
-                  const SizedBox(width: 8),
-                  IconButton(
+                ),
+                const SizedBox(width: 8),
+                Container(
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    border: Border.all(
+                      color: const Color(0xFF00F7FF),
+                      width: 1,
+                    ),
+                    boxShadow: [
+                      BoxShadow(
+                        color: const Color(0xFF00F7FF).withOpacity(0.1),
+                        blurRadius: 8,
+                        spreadRadius: -2,
+                      ),
+                    ],
+                  ),
+                  child: IconButton(
                     onPressed: _isSending ? null : _sendMessage,
                     icon: _isSending
                         ? const SizedBox(
                             width: 24,
                             height: 24,
-                            child: CircularProgressIndicator(strokeWidth: 2),
+                            child: CircularProgressIndicator(
+                              color: Color(0xFF00F7FF),
+                              strokeWidth: 2,
+                            ),
                           )
-                        : const Icon(Icons.send),
+                        : const Icon(
+                            Icons.send,
+                            color: Color(0xFF00F7FF),
+                          ),
                   ),
-                ],
-              ),
+                ),
+              ],
             ),
           ),
-        ],
-      ),
+        ),
+      ],
     );
   }
 

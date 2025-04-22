@@ -160,7 +160,7 @@ class _SearchResultScreenState extends State<SearchResultScreen> {
     Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (context) => UserProfileScreen(user: user),
+        builder: (context) => UserProfileScreen(userId: user.id),
       ),
     );
   }
@@ -168,14 +168,47 @@ class _SearchResultScreenState extends State<SearchResultScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text('「${widget.searchQuery}」の検索結果')),
-      body: _buildBody(),
+      backgroundColor: Colors.transparent,
+      appBar: AppBar(
+        backgroundColor: const Color(0xFF1A1B3F),
+        title: Text(
+          '「${widget.searchQuery}」の検索結果',
+          style: const TextStyle(
+            color: Colors.white,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+        leading: IconButton(
+          icon: const Icon(
+            Icons.arrow_back,
+            color: Color(0xFF00F7FF),
+          ),
+          onPressed: () => Navigator.pop(context),
+        ),
+      ),
+      body: Container(
+        decoration: const BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+            colors: [
+              Color(0xFF0B1221),
+              Color(0xFF1A1B3F),
+            ],
+          ),
+        ),
+        child: _buildBody(),
+      ),
     );
   }
 
   Widget _buildBody() {
     if (_isLoading) {
-      return const Center(child: CircularProgressIndicator());
+      return const Center(
+        child: CircularProgressIndicator(
+          color: Color(0xFF00F7FF),
+        ),
+      );
     }
 
     if (_hasError) {
@@ -183,17 +216,41 @@ class _SearchResultScreenState extends State<SearchResultScreen> {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Icon(Icons.error_outline, size: 48, color: Colors.red),
+            const Icon(
+              Icons.error_outline,
+              size: 48,
+              color: Color(0xFF00F7FF),
+            ),
             const SizedBox(height: 16),
             const Text(
               'ユーザーの検索に失敗しました',
-              style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+              style: TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.bold,
+                color: Colors.white,
+              ),
             ),
             const SizedBox(height: 16),
             ElevatedButton.icon(
               onPressed: _searchUsers,
-              icon: const Icon(Icons.refresh),
-              label: const Text('再試行'),
+              icon: const Icon(Icons.refresh, color: Colors.black),
+              label: const Text(
+                '再試行',
+                style: TextStyle(
+                  color: Colors.black,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFF00F7FF),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 24,
+                  vertical: 12,
+                ),
+              ),
             ),
           ],
         ),
@@ -205,11 +262,18 @@ class _SearchResultScreenState extends State<SearchResultScreen> {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(Icons.search_off, size: 48, color: Colors.grey),
+            Icon(
+              Icons.search_off,
+              size: 48,
+              color: Color(0xFF00F7FF),
+            ),
             SizedBox(height: 16),
             Text(
               'ユーザーが見つかりませんでした',
-              style: TextStyle(fontSize: 16, color: Colors.grey),
+              style: TextStyle(
+                fontSize: 16,
+                color: Colors.white70,
+              ),
             ),
           ],
         ),
@@ -217,39 +281,130 @@ class _SearchResultScreenState extends State<SearchResultScreen> {
     }
 
     return ListView.builder(
+      padding: const EdgeInsets.all(16),
       itemCount: _users.length,
       itemBuilder: (context, index) {
         final user = _users[index];
         final isFollowing = _followStatus[user.id] ?? false;
         final isLoading = _loadingStatus[user.id] ?? false;
 
-        return ListTile(
-          leading: CircleAvatar(
-            backgroundImage:
-                user.imageUrl.isNotEmpty ? NetworkImage(user.imageUrl) : null,
-            child: user.imageUrl.isEmpty ? const Icon(Icons.person) : null,
+        return Container(
+          margin: const EdgeInsets.only(bottom: 16),
+          decoration: BoxDecoration(
+            color: const Color(0xFF1A1B3F).withOpacity(0.5),
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(
+              color: const Color(0xFF00F7FF),
+              width: 1,
+            ),
+            boxShadow: [
+              BoxShadow(
+                color: const Color(0xFF00F7FF).withOpacity(0.1),
+                blurRadius: 8,
+                spreadRadius: -2,
+              ),
+            ],
           ),
-          title: Text(user.displayName),
-          subtitle: Text(user.profile),
-          trailing: isLoading
-              ? const SizedBox(
-                  width: 24,
-                  height: 24,
-                  child: CircularProgressIndicator(strokeWidth: 2),
-                )
-              : ElevatedButton(
-                  onPressed: () => _toggleFollow(user),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: isFollowing ? Colors.grey : Colors.blue,
-                    foregroundColor: Colors.white,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(20),
-                    ),
-                    padding: const EdgeInsets.symmetric(horizontal: 16),
-                  ),
-                  child: Text(isFollowing ? 'フォロー中' : 'フォロー'),
+          child: ListTile(
+            contentPadding: const EdgeInsets.all(16),
+            leading: Container(
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                border: Border.all(
+                  color: const Color(0xFF00F7FF),
+                  width: 2,
                 ),
-          onTap: () => _showUserProfile(user),
+                boxShadow: [
+                  BoxShadow(
+                    color: const Color(0xFF00F7FF).withOpacity(0.2),
+                    blurRadius: 8,
+                    spreadRadius: -2,
+                  ),
+                ],
+              ),
+              child: CircleAvatar(
+                radius: 24,
+                backgroundColor: const Color(0xFF1A1B3F),
+                backgroundImage: user.imageUrl.isNotEmpty
+                    ? NetworkImage(user.imageUrl)
+                    : null,
+                child: user.imageUrl.isEmpty
+                    ? const Icon(
+                        Icons.person,
+                        color: Color(0xFF00F7FF),
+                      )
+                    : null,
+              ),
+            ),
+            title: Text(
+              user.displayName,
+              style: const TextStyle(
+                color: Colors.white,
+                fontWeight: FontWeight.bold,
+                fontSize: 16,
+              ),
+            ),
+            subtitle: Text(
+              user.profile,
+              style: const TextStyle(
+                color: Colors.white70,
+                fontSize: 14,
+              ),
+            ),
+            trailing: isLoading
+                ? const SizedBox(
+                    width: 24,
+                    height: 24,
+                    child: CircularProgressIndicator(
+                      color: Color(0xFF00F7FF),
+                      strokeWidth: 2,
+                    ),
+                  )
+                : Container(
+                    decoration: BoxDecoration(
+                      boxShadow: [
+                        BoxShadow(
+                          color: const Color(0xFF00F7FF).withOpacity(0.2),
+                          blurRadius: 8,
+                          spreadRadius: -2,
+                        ),
+                      ],
+                    ),
+                    child: ElevatedButton(
+                      onPressed: () => _toggleFollow(user),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: isFollowing
+                            ? Colors.transparent
+                            : const Color(0xFF00F7FF),
+                        foregroundColor: isFollowing
+                            ? const Color(0xFF00F7FF)
+                            : Colors.black,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(20),
+                          side: BorderSide(
+                            color: const Color(0xFF00F7FF),
+                            width: isFollowing ? 1 : 0,
+                          ),
+                        ),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 16,
+                          vertical: 8,
+                        ),
+                      ),
+                      child: Text(
+                        isFollowing ? 'フォロー中' : 'フォロー',
+                        style: TextStyle(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 14,
+                          color: isFollowing
+                              ? const Color(0xFF00F7FF)
+                              : Colors.black,
+                        ),
+                      ),
+                    ),
+                  ),
+            onTap: () => _showUserProfile(user),
+          ),
         );
       },
     );

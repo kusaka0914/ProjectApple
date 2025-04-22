@@ -44,58 +44,125 @@ class _HomeTabState extends State<HomeTab> {
 
   @override
   Widget build(BuildContext context) {
-    return CustomScrollView(
-      slivers: [
-        SliverAppBar(
-          floating: true,
-          bottom: PreferredSize(
-            preferredSize: const Size.fromHeight(20),
-            child: Padding(
-              padding: const EdgeInsets.fromLTRB(16, 0, 16, 4),
-              child: Row(
-                children: [
-                  Expanded(
-                    child: Center(
-                      child: ConstrainedBox(
-                        constraints: const BoxConstraints(maxWidth: 240),
-                        child: TextField(
-                          controller: _searchController,
-                          decoration: InputDecoration(
-                            hintText: 'ユーザーを検索',
-                            prefixIcon: const Icon(Icons.search),
-                            suffixIcon: IconButton(
-                              icon: const Icon(Icons.clear),
-                              onPressed: () => _searchController.clear(),
-                            ),
-                            border: OutlineInputBorder(
+    return Container(
+      decoration: const BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topCenter,
+          end: Alignment.bottomCenter,
+          colors: [
+            Color(0xFF0B1221),
+            Color(0xFF1A1B3F),
+          ],
+        ),
+      ),
+      child: CustomScrollView(
+        slivers: [
+          SliverAppBar(
+            floating: true,
+            backgroundColor: const Color(0xFF1A1B3F),
+            bottom: PreferredSize(
+              preferredSize: const Size.fromHeight(80),
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: Center(
+                        child: ConstrainedBox(
+                          constraints: const BoxConstraints(maxWidth: 240),
+                          child: Container(
+                            decoration: BoxDecoration(
                               borderRadius: BorderRadius.circular(30),
+                              border: Border.all(
+                                color: const Color(0xFF00F7FF),
+                                width: 1,
+                              ),
+                              boxShadow: [
+                                BoxShadow(
+                                  color:
+                                      const Color(0xFF00F7FF).withOpacity(0.1),
+                                  blurRadius: 8,
+                                  spreadRadius: -2,
+                                ),
+                              ],
                             ),
-                            filled: true,
-                            fillColor: Theme.of(context).cardColor,
-                            contentPadding: const EdgeInsets.symmetric(
-                              vertical: 0,
-                              horizontal: 16,
+                            child: TextField(
+                              controller: _searchController,
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontSize: 14,
+                              ),
+                              decoration: InputDecoration(
+                                hintText: 'ユーザーを検索',
+                                hintStyle: TextStyle(
+                                  color: Colors.white.withOpacity(0.5),
+                                  fontSize: 14,
+                                ),
+                                prefixIcon: const Icon(
+                                  Icons.search,
+                                  color: Color(0xFF00F7FF),
+                                  size: 20,
+                                ),
+                                suffixIcon: IconButton(
+                                  icon: const Icon(
+                                    Icons.clear,
+                                    color: Color(0xFF00F7FF),
+                                    size: 20,
+                                  ),
+                                  onPressed: () => _searchController.clear(),
+                                ),
+                                border: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(30),
+                                  borderSide: BorderSide.none,
+                                ),
+                                filled: true,
+                                fillColor:
+                                    const Color(0xFF1A1B3F).withOpacity(0.5),
+                                contentPadding: const EdgeInsets.symmetric(
+                                  vertical: 0,
+                                  horizontal: 16,
+                                ),
+                                isDense: true,
+                              ),
+                              textInputAction: TextInputAction.search,
+                              onSubmitted: (_) => _onSearch(),
                             ),
-                            isDense: true,
                           ),
-                          textInputAction: TextInputAction.search,
-                          onSubmitted: (_) => _onSearch(),
                         ),
                       ),
                     ),
-                  ),
-                  IconButton(
-                    icon: const Icon(Icons.message_outlined),
-                    onPressed: _showMessages,
-                    tooltip: 'メッセージ',
-                  ),
-                ],
+                    Container(
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        border: Border.all(
+                          color: const Color(0xFF00F7FF),
+                          width: 1,
+                        ),
+                        boxShadow: [
+                          BoxShadow(
+                            color: const Color(0xFF00F7FF).withOpacity(0.1),
+                            blurRadius: 8,
+                            spreadRadius: -2,
+                          ),
+                        ],
+                      ),
+                      child: IconButton(
+                        icon: const Icon(
+                          Icons.message_outlined,
+                          color: Color(0xFF00F7FF),
+                        ),
+                        onPressed: _showMessages,
+                        tooltip: 'メッセージ',
+                      ),
+                    ),
+                  ],
+                ),
               ),
             ),
           ),
-        ),
-        // ... existing feed content ...
-      ],
+          // ... existing feed content ...
+        ],
+      ),
     );
   }
 }

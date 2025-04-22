@@ -15,6 +15,7 @@ class EditProfileScreen extends StatefulWidget {
 class EditProfileScreenState extends State<EditProfileScreen> {
   final _formKey = GlobalKey<FormState>();
   final _nameController = TextEditingController();
+  final _nicknameController = TextEditingController();
   final _bioController = TextEditingController();
   final _mbtiController = TextEditingController();
   final _occupationController = TextEditingController();
@@ -35,6 +36,7 @@ class EditProfileScreenState extends State<EditProfileScreen> {
   @override
   void dispose() {
     _nameController.dispose();
+    _nicknameController.dispose();
     _bioController.dispose();
     _mbtiController.dispose();
     _occupationController.dispose();
@@ -48,15 +50,16 @@ class EditProfileScreenState extends State<EditProfileScreen> {
     final user = FirebaseAuth.instance.currentUser;
     if (user == null) return;
 
-    final userData =
-        await FirebaseFirestore.instance
-            .collection('users')
-            .doc(user.uid)
-            .get();
+    final userData = await FirebaseFirestore.instance
+        .collection('users')
+        .doc(user.uid)
+        .get();
 
     if (userData.exists) {
       setState(() {
-        _nameController.text = userData.get('displayName') ?? '';
+        _nameController.text = userData.get('username') ?? '';
+        _nicknameController.text =
+            userData.get('nickname') ?? _nameController.text;
         _bioController.text = userData.get('bio') ?? '';
         _mbtiController.text = userData.get('mbti') ?? '';
         _occupationController.text = userData.get('occupation') ?? '';
@@ -149,7 +152,8 @@ class EditProfileScreenState extends State<EditProfileScreen> {
       }
 
       final userData = {
-        'displayName': _nameController.text,
+        'username': _nameController.text,
+        'nickname': _nicknameController.text,
         'bio': _bioController.text,
         'mbti': _mbtiController.text,
         'occupation': _occupationController.text,
@@ -189,146 +193,336 @@ class EditProfileScreenState extends State<EditProfileScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: const Color(0xFF0B1221),
       appBar: AppBar(
-        title: const Text('プロフィール編集'),
+        backgroundColor: Colors.transparent,
+        elevation: 0,
         actions: [
           if (!_isLoading)
-            TextButton(onPressed: _saveProfile, child: const Text('保存')),
+            TextButton(
+              onPressed: _saveProfile,
+              child: const Text(
+                '保存',
+                style: TextStyle(
+                  color: Color(0xFF00F7FF),
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ),
         ],
       ),
-      body: Form(
-        key: _formKey,
-        child: ListView(
-          padding: const EdgeInsets.all(16),
-          children: [
-            Center(
-              child: Stack(
-                children: [
-                  CircleAvatar(
-                    radius: 50,
-                    backgroundImage:
-                        _imageFile != null
+      body: Container(
+        decoration: const BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+            colors: [
+              Color(0xFF0B1221),
+              Color(0xFF1A1B3F),
+              Color(0xFF0B1221),
+            ],
+          ),
+        ),
+        child: Form(
+          key: _formKey,
+          child: ListView(
+            padding: const EdgeInsets.all(16),
+            children: [
+              Center(
+                child: Stack(
+                  children: [
+                    Container(
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        border: Border.all(
+                          color: const Color(0xFF00F7FF),
+                          width: 2,
+                        ),
+                        boxShadow: const [
+                          BoxShadow(
+                            color: Color(0x8000F7FF),
+                            blurRadius: 15,
+                            spreadRadius: 2,
+                          ),
+                        ],
+                      ),
+                      child: CircleAvatar(
+                        radius: 50,
+                        backgroundImage: _imageFile != null
                             ? FileImage(_imageFile!) as ImageProvider
                             : (_imageUrl != null
                                 ? NetworkImage(_imageUrl!) as ImageProvider
                                 : const AssetImage(
-                                  'assets/default_profile.png',
-                                )),
-                  ),
-                  Positioned(
-                    bottom: 0,
-                    right: 0,
-                    child: IconButton(
-                      onPressed: _pickImage,
-                      icon: const Icon(Icons.camera_alt),
-                      style: IconButton.styleFrom(
-                        backgroundColor: Theme.of(context).primaryColor,
-                        foregroundColor: Colors.white,
+                                    'assets/default_profile.png')),
                       ),
+                    ),
+                    Positioned(
+                      bottom: 0,
+                      right: 0,
+                      child: Container(
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          border: Border.all(
+                            color: const Color(0xFF00F7FF),
+                            width: 2,
+                          ),
+                          boxShadow: const [
+                            BoxShadow(
+                              color: Color(0x8000F7FF),
+                              blurRadius: 8,
+                              spreadRadius: 1,
+                            ),
+                          ],
+                        ),
+                        child: IconButton(
+                          onPressed: _pickImage,
+                          icon: const Icon(
+                            Icons.camera_alt,
+                            color: Color(0xFF00F7FF),
+                          ),
+                          style: IconButton.styleFrom(
+                            backgroundColor: const Color(0xFF1A1B3F),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 24),
+              _buildTextField(
+                controller: _nameController,
+                labelText: 'ユーザーネーム',
+                helperText: '半角英数字と_(アンダースコア)のみ使用可能、16文字以内',
+                validator: (value) {
+                  if (value == null || value.isEmpty) {
+                    return 'ユーザーネームを入力してください';
+                  }
+                  if (value.length > 16) {
+                    return 'ユーザーネームは16文字以内で入力してください';
+                  }
+                  if (!RegExp(r'^[a-zA-Z0-9_]+$').hasMatch(value)) {
+                    return 'ユーザーネームは半角英数字と_のみ使用できます';
+                  }
+                  return null;
+                },
+              ),
+              const SizedBox(height: 16),
+              _buildTextField(
+                controller: _nicknameController,
+                labelText: 'ニックネーム',
+                helperText: '他のユーザーに表示される名前です',
+                validator: (value) {
+                  if (value == null || value.isEmpty) {
+                    return 'ニックネームを入力してください';
+                  }
+                  if (value.length > 30) {
+                    return 'ニックネームは30文字以内で入力してください';
+                  }
+                  return null;
+                },
+              ),
+              const SizedBox(height: 16),
+              _buildTextField(
+                controller: _bioController,
+                labelText: '自己紹介',
+                maxLines: 3,
+              ),
+              const SizedBox(height: 16),
+              _buildTextField(
+                controller: _mbtiController,
+                labelText: 'MBTI',
+                hintText: '例: INTJ',
+              ),
+              const SizedBox(height: 16),
+              _buildTextField(
+                controller: _occupationController,
+                labelText: '職種',
+                hintText: '例: 学生、薬剤師、建築家など',
+              ),
+              const SizedBox(height: 16),
+              _buildTextField(
+                controller: _universityController,
+                labelText: '出身・在学大学（任意）',
+                hintText: '例: 青森大学',
+              ),
+              const SizedBox(height: 16),
+              _buildTextField(
+                controller: _favoritePlacesController,
+                labelText: '好きなお店・県内企業',
+                hintText: '複数ある場合はカンマ(,)で区切って入力',
+                maxLines: 2,
+              ),
+              const SizedBox(height: 16),
+              Row(
+                children: [
+                  Expanded(
+                    child: _buildTextField(
+                      controller: _linksController,
+                      labelText: '外部リンク',
+                      hintText: 'https://...',
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Container(
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      border: Border.all(
+                        color: const Color(0xFF00F7FF),
+                        width: 2,
+                      ),
+                      boxShadow: const [
+                        BoxShadow(
+                          color: Color(0x4000F7FF),
+                          blurRadius: 8,
+                          spreadRadius: 1,
+                        ),
+                      ],
+                    ),
+                    child: IconButton(
+                      icon: const Icon(
+                        Icons.add,
+                        color: Color(0xFF00F7FF),
+                      ),
+                      onPressed: _addLink,
                     ),
                   ),
                 ],
               ),
-            ),
-            const SizedBox(height: 24),
-            TextFormField(
-              controller: _nameController,
-              decoration: const InputDecoration(
-                labelText: 'ユーザーネーム',
-                border: OutlineInputBorder(),
-              ),
-              validator: (value) {
-                if (value == null || value.isEmpty) {
-                  return 'ユーザーネームを入力してください';
-                }
-                return null;
-              },
-            ),
-            const SizedBox(height: 16),
-            TextFormField(
-              controller: _bioController,
-              decoration: const InputDecoration(
-                labelText: '自己紹介',
-                border: OutlineInputBorder(),
-              ),
-              maxLines: 3,
-            ),
-            const SizedBox(height: 16),
-            TextFormField(
-              controller: _mbtiController,
-              decoration: const InputDecoration(
-                labelText: 'MBTI',
-                border: OutlineInputBorder(),
-                hintText: '例: INTJ',
-              ),
-            ),
-            const SizedBox(height: 16),
-            TextFormField(
-              controller: _occupationController,
-              decoration: const InputDecoration(
-                labelText: '職種',
-                border: OutlineInputBorder(),
-                hintText: '例: 学生、薬剤師、建築家など',
-              ),
-            ),
-            const SizedBox(height: 16),
-            TextFormField(
-              controller: _universityController,
-              decoration: const InputDecoration(
-                labelText: '出身・在学大学（任意）',
-                border: OutlineInputBorder(),
-                hintText: '例: 青森大学',
-              ),
-            ),
-            const SizedBox(height: 16),
-            TextFormField(
-              controller: _favoritePlacesController,
-              decoration: const InputDecoration(
-                labelText: '好きなお店・県内企業',
-                border: OutlineInputBorder(),
-                hintText: '複数ある場合はカンマ(,)で区切って入力',
-              ),
-              maxLines: 2,
-            ),
-            const SizedBox(height: 16),
-            Row(
-              children: [
-                Expanded(
-                  child: TextFormField(
-                    controller: _linksController,
-                    decoration: const InputDecoration(
-                      labelText: '外部リンク',
-                      border: OutlineInputBorder(),
-                      hintText: 'https://...',
+              if (_links.isNotEmpty) ...[
+                const SizedBox(height: 16),
+                Container(
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF1A1B3F).withOpacity(0.5),
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(
+                      color: const Color(0xFF00F7FF),
+                      width: 1,
                     ),
+                    boxShadow: const [
+                      BoxShadow(
+                        color: Color(0x4000F7FF),
+                        blurRadius: 8,
+                        spreadRadius: 1,
+                      ),
+                    ],
+                  ),
+                  child: Column(
+                    children: _links.asMap().entries.map((entry) {
+                      return ListTile(
+                        title: Text(
+                          entry.value,
+                          style: const TextStyle(
+                            color: Colors.white,
+                          ),
+                        ),
+                        trailing: IconButton(
+                          icon: const Icon(
+                            Icons.remove_circle_outline,
+                            color: Color(0xFF00F7FF),
+                          ),
+                          onPressed: () => _removeLink(entry.key),
+                        ),
+                      );
+                    }).toList(),
                   ),
                 ),
-                IconButton(icon: const Icon(Icons.add), onPressed: _addLink),
               ],
-            ),
-            if (_links.isNotEmpty) ...[
-              const SizedBox(height: 8),
-              Card(
-                child: Column(
-                  children:
-                      _links.asMap().entries.map((entry) {
-                        return ListTile(
-                          title: Text(entry.value),
-                          trailing: IconButton(
-                            icon: const Icon(Icons.remove_circle_outline),
-                            onPressed: () => _removeLink(entry.key),
-                          ),
-                        );
-                      }).toList(),
+              if (_isLoading) ...[
+                const SizedBox(height: 16),
+                const Center(
+                  child: CircularProgressIndicator(
+                    color: Color(0xFF00F7FF),
+                  ),
                 ),
-              ),
+              ],
+              const SizedBox(height: 32),
             ],
-            if (_isLoading) ...[
-              const SizedBox(height: 16),
-              const Center(child: CircularProgressIndicator()),
-            ],
-          ],
+          ),
         ),
+      ),
+    );
+  }
+
+  Widget _buildTextField({
+    required TextEditingController controller,
+    required String labelText,
+    String? helperText,
+    String? hintText,
+    int? maxLines,
+    String? Function(String?)? validator,
+  }) {
+    return Container(
+      decoration: BoxDecoration(
+        color: const Color(0xFF1A1B3F).withOpacity(0.5),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: const Color(0xFF00F7FF),
+          width: 1,
+        ),
+        boxShadow: const [
+          BoxShadow(
+            color: Color(0x4000F7FF),
+            blurRadius: 8,
+            spreadRadius: 1,
+          ),
+        ],
+      ),
+      child: TextFormField(
+        controller: controller,
+        decoration: InputDecoration(
+          labelText: labelText,
+          helperText: helperText,
+          hintText: hintText,
+          labelStyle: const TextStyle(
+            color: Color(0xFF00F7FF),
+          ),
+          helperStyle: TextStyle(
+            color: Colors.white.withOpacity(0.6),
+          ),
+          hintStyle: TextStyle(
+            color: Colors.white.withOpacity(0.3),
+          ),
+          border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(12),
+            borderSide: BorderSide.none,
+          ),
+          enabledBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(12),
+            borderSide: BorderSide.none,
+          ),
+          focusedBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(12),
+            borderSide: const BorderSide(
+              color: Color(0xFF00F7FF),
+              width: 2,
+            ),
+          ),
+          errorBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(12),
+            borderSide: const BorderSide(
+              color: Colors.red,
+              width: 2,
+            ),
+          ),
+          focusedErrorBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(12),
+            borderSide: const BorderSide(
+              color: Colors.red,
+              width: 2,
+            ),
+          ),
+          contentPadding: const EdgeInsets.symmetric(
+            horizontal: 16,
+            vertical: 16,
+          ),
+        ),
+        style: const TextStyle(
+          color: Colors.white,
+        ),
+        maxLines: maxLines ?? 1,
+        validator: validator,
       ),
     );
   }

@@ -87,39 +87,116 @@ class _PostCreateScreenState extends State<PostCreateScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: Colors.transparent,
       appBar: AppBar(
-        title: const Text('新規投稿'),
+        backgroundColor: const Color(0xFF1A1B3F),
+        // title: const Text(
+        //   '新規投稿',
+        //   style: TextStyle(color: Colors.white),
+        // ),
+        leading: IconButton(
+          icon: const Icon(
+            Icons.arrow_back,
+            color: Color(0xFF00F7FF),
+          ),
+          onPressed: () => Navigator.pop(context),
+        ),
         actions: [
           if (_isLoading)
             const Center(
               child: Padding(
                 padding: EdgeInsets.only(right: 16.0),
-                child: CircularProgressIndicator(),
+                child: CircularProgressIndicator(
+                  color: Color(0xFF00F7FF),
+                ),
               ),
             )
           else
-            IconButton(onPressed: _submitPost, icon: const Icon(Icons.send)),
-        ],
-      ),
-      body: SingleChildScrollView(
-        child: Column(
-          children: [
-            AspectRatio(
-              aspectRatio: 1,
-              child: Image.file(widget.imageFile, fit: BoxFit.cover),
-            ),
-            Padding(
-              padding: const EdgeInsets.all(16.0),
-              child: TextField(
-                controller: _postController,
-                maxLines: null,
-                decoration: const InputDecoration(
-                  hintText: '投稿内容を入力してください',
-                  border: InputBorder.none,
+            Container(
+              margin: const EdgeInsets.only(right: 8),
+              decoration: BoxDecoration(
+                boxShadow: [
+                  BoxShadow(
+                    color: const Color(0xFF00F7FF).withOpacity(0.2),
+                    blurRadius: 10,
+                    spreadRadius: -5,
+                  ),
+                ],
+              ),
+              child: IconButton(
+                onPressed: _submitPost,
+                icon: const Icon(
+                  Icons.send,
+                  color: Color(0xFF00F7FF),
                 ),
               ),
             ),
-          ],
+        ],
+      ),
+      body: Container(
+        decoration: const BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+            colors: [
+              Color(0xFF0B1221),
+              Color(0xFF1A1B3F),
+            ],
+          ),
+        ),
+        child: SingleChildScrollView(
+          child: Column(
+            children: [
+              Container(
+                decoration: BoxDecoration(
+                  border: Border.all(
+                    color: const Color(0xFF00F7FF),
+                    width: 1,
+                  ),
+                  boxShadow: [
+                    BoxShadow(
+                      color: const Color(0xFF00F7FF).withOpacity(0.1),
+                      blurRadius: 8,
+                      spreadRadius: -4,
+                    ),
+                  ],
+                ),
+                child: AspectRatio(
+                  aspectRatio: 1,
+                  child: Image.file(widget.imageFile, fit: BoxFit.cover),
+                ),
+              ),
+              Container(
+                margin: const EdgeInsets.all(16),
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: const Color(0xFF1A1B3F),
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(
+                    color: const Color(0xFF00F7FF),
+                    width: 1,
+                  ),
+                  boxShadow: [
+                    BoxShadow(
+                      color: const Color(0xFF00F7FF).withOpacity(0.1),
+                      blurRadius: 8,
+                      spreadRadius: -4,
+                    ),
+                  ],
+                ),
+                child: TextField(
+                  controller: _postController,
+                  maxLines: null,
+                  style: const TextStyle(color: Colors.white),
+                  decoration: const InputDecoration(
+                    hintText: '投稿内容を入力してください',
+                    hintStyle: TextStyle(color: Colors.white54),
+                    border: InputBorder.none,
+                  ),
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );

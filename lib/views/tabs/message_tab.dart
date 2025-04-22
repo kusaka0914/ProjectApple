@@ -82,239 +82,364 @@ class _MessageTabState extends State<MessageTab> {
   Widget build(BuildContext context) {
     final currentUserId = FirebaseAuth.instance.currentUser?.uid;
     if (currentUserId == null) {
-      return const Center(child: Text('ログインが必要です'));
+      return const Center(
+        child: Text(
+          'ログインが必要です',
+          style: TextStyle(color: Colors.white),
+        ),
+      );
     }
 
-    return CustomScrollView(
-      slivers: [
-        const SliverAppBar(title: Text('メッセージ'), floating: true),
-        if (_isLoading)
-          const SliverFillRemaining(
-            child: Center(child: CircularProgressIndicator()),
-          )
-        else if (_hasError)
-          SliverFillRemaining(
-            child: Center(
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  const Icon(Icons.error_outline, size: 48, color: Colors.red),
-                  const SizedBox(height: 16),
-                  const Text(
-                    'メッセージの読み込みに失敗しました',
-                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-                  ),
-                  const SizedBox(height: 16),
-                  ElevatedButton.icon(
-                    onPressed: _ensureOpenChatExists,
-                    icon: const Icon(Icons.refresh),
-                    label: const Text('再読み込み'),
-                  ),
-                ],
+    return Container(
+      decoration: const BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topCenter,
+          end: Alignment.bottomCenter,
+          colors: [
+            Color(0xFF0B1221),
+            Color(0xFF1A1B3F),
+          ],
+        ),
+      ),
+      child: CustomScrollView(
+        slivers: [
+          SliverAppBar(
+            title: const Text(
+              'メッセージ',
+              style: TextStyle(
+                color: Colors.white,
+                fontWeight: FontWeight.bold,
               ),
             ),
-          )
-        else ...[
-          // オープンチャット
-          SliverToBoxAdapter(
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16.0),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Padding(
-                    padding: EdgeInsets.symmetric(vertical: 8.0),
-                    child: Text(
-                      'オープンチャット',
+            floating: true,
+            backgroundColor: const Color(0xFF1A1B3F),
+          ),
+          if (_isLoading)
+            const SliverFillRemaining(
+              child: Center(
+                child: CircularProgressIndicator(
+                  color: Color(0xFF00F7FF),
+                ),
+              ),
+            )
+          else if (_hasError)
+            SliverFillRemaining(
+              child: Center(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const Icon(
+                      Icons.error_outline,
+                      size: 48,
+                      color: Color(0xFF00F7FF),
+                    ),
+                    const SizedBox(height: 16),
+                    const Text(
+                      'メッセージの読み込みに失敗しました',
                       style: TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.bold,
-                        color: Colors.grey,
+                        color: Colors.white,
                       ),
                     ),
-                  ),
-                  StreamBuilder<DocumentSnapshot>(
-                    stream: FirebaseFirestore.instance
-                        .collection('messages')
-                        .doc(openChatId)
-                        .snapshots(),
-                    builder: (context, snapshot) {
-                      if (!snapshot.hasData) {
-                        return const SizedBox.shrink();
-                      }
-
-                      final data =
-                          snapshot.data!.data() as Map<String, dynamic>?;
-                      if (data == null) {
-                        return const SizedBox.shrink();
-                      }
-
-                      final lastMessageTime =
-                          (data['lastMessageTime'] as Timestamp?)?.toDate();
-                      final lastMessage = data['lastMessage'] as String? ?? '';
-                      final participantsCount =
-                          data['participantsCount'] as int? ?? 0;
-
-                      return Card(
-                        elevation: 0,
-                        margin: const EdgeInsets.only(bottom: 8.0),
+                    const SizedBox(height: 16),
+                    ElevatedButton.icon(
+                      onPressed: _ensureOpenChatExists,
+                      icon: const Icon(Icons.refresh, color: Colors.black),
+                      label: const Text(
+                        '再読み込み',
+                        style: TextStyle(
+                          color: Colors.black,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xFF00F7FF),
                         shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
-                          side: BorderSide(color: Colors.grey.shade200),
+                          borderRadius: BorderRadius.circular(8),
                         ),
-                        child: ListTile(
-                          contentPadding: const EdgeInsets.symmetric(
-                            horizontal: 16,
-                            vertical: 8,
-                          ),
-                          leading: const CircleAvatar(
-                            backgroundColor: Colors.blue,
-                            child: Icon(
-                              Icons.groups,
-                              color: Colors.white,
-                            ),
-                          ),
-                          title: Row(
-                            children: [
-                              const Text('みんなのチャット'),
-                              const SizedBox(width: 8),
-                              Container(
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 8,
-                                  vertical: 2,
-                                ),
-                                decoration: BoxDecoration(
-                                  color: Colors.blue.shade50,
-                                  borderRadius: BorderRadius.circular(12),
-                                ),
-                                child: Text(
-                                  '$participantsCount人',
-                                  style: TextStyle(
-                                    fontSize: 12,
-                                    color: Colors.blue.shade700,
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ),
-                          subtitle: lastMessage.isNotEmpty
-                              ? Text(
-                                  lastMessage,
-                                  maxLines: 1,
-                                  overflow: TextOverflow.ellipsis,
-                                )
-                              : const Text(
-                                  'メッセージはありません',
-                                  style: TextStyle(
-                                    color: Colors.grey,
-                                    fontStyle: FontStyle.italic,
-                                  ),
-                                ),
-                          trailing: lastMessageTime != null
-                              ? Text(
-                                  _formatDateTime(lastMessageTime),
-                                  style: const TextStyle(
-                                    fontSize: 12,
-                                    color: Colors.grey,
-                                  ),
-                                )
-                              : null,
-                          onTap: () {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (context) => MessageDetailScreen(
-                                  messageId: openChatId,
-                                  isOpenChat: true,
-                                ),
-                              ),
-                            );
-                          },
-                        ),
-                      );
-                    },
-                  ),
-                  if (!_isLoading && !_hasError)
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            )
+          else ...[
+            // オープンチャット
+            SliverToBoxAdapter(
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
                     const Padding(
                       padding: EdgeInsets.symmetric(vertical: 8.0),
                       child: Text(
-                        'プライベートメッセージ',
+                        'オープンチャット',
                         style: TextStyle(
                           fontSize: 16,
                           fontWeight: FontWeight.bold,
-                          color: Colors.grey,
+                          color: Color(0xFF00F7FF),
                         ),
                       ),
                     ),
-                ],
-              ),
-            ),
-          ),
+                    StreamBuilder<DocumentSnapshot>(
+                      stream: FirebaseFirestore.instance
+                          .collection('messages')
+                          .doc(openChatId)
+                          .snapshots(),
+                      builder: (context, snapshot) {
+                        if (!snapshot.hasData) {
+                          return const SizedBox.shrink();
+                        }
 
-          // プライベートメッセージ
-          StreamBuilder<List<Message>>(
-            stream: _getMessagesStream(currentUserId),
-            builder: (context, snapshot) {
-              if (snapshot.hasError) {
-                print('Error in message stream: ${snapshot.error}');
-                return SliverToBoxAdapter(
-                  child: Center(child: Text('エラーが発生しました: ${snapshot.error}')),
-                );
-              }
+                        final data =
+                            snapshot.data!.data() as Map<String, dynamic>?;
+                        if (data == null) {
+                          return const SizedBox.shrink();
+                        }
 
-              if (snapshot.connectionState == ConnectionState.waiting) {
-                return const SliverToBoxAdapter(
-                  child: Center(child: CircularProgressIndicator()),
-                );
-              }
+                        final lastMessageTime =
+                            (data['lastMessageTime'] as Timestamp?)?.toDate();
+                        final lastMessage =
+                            data['lastMessage'] as String? ?? '';
+                        final participantsCount =
+                            data['participantsCount'] as int? ?? 0;
 
-              final messages = snapshot.data ?? [];
-
-              if (messages.isEmpty) {
-                return const SliverFillRemaining(
-                  hasScrollBody: false,
-                  child: Center(
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Icon(
-                          Icons.message_outlined,
-                          size: 48,
-                          color: Colors.grey,
-                        ),
-                        SizedBox(height: 16),
-                        Text(
-                          'プライベートメッセージはまだありません',
+                        return Container(
+                          margin: const EdgeInsets.only(bottom: 8.0),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFF1A1B3F).withOpacity(0.5),
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(
+                              color: const Color(0xFF00F7FF),
+                              width: 1,
+                            ),
+                            boxShadow: [
+                              BoxShadow(
+                                color: const Color(0xFF00F7FF).withOpacity(0.1),
+                                blurRadius: 8,
+                                spreadRadius: -2,
+                              ),
+                            ],
+                          ),
+                          child: ListTile(
+                            contentPadding: const EdgeInsets.symmetric(
+                              horizontal: 16,
+                              vertical: 8,
+                            ),
+                            leading: Container(
+                              decoration: BoxDecoration(
+                                shape: BoxShape.circle,
+                                border: Border.all(
+                                  color: const Color(0xFF00F7FF),
+                                  width: 2,
+                                ),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: const Color(0xFF00F7FF)
+                                        .withOpacity(0.2),
+                                    blurRadius: 8,
+                                    spreadRadius: -2,
+                                  ),
+                                ],
+                              ),
+                              child: const CircleAvatar(
+                                backgroundColor: Color(0xFF1A1B3F),
+                                child: Icon(
+                                  Icons.groups,
+                                  color: Color(0xFF00F7FF),
+                                ),
+                              ),
+                            ),
+                            title: Row(
+                              children: [
+                                const Text(
+                                  'みんなのチャット',
+                                  style: TextStyle(
+                                    color: Colors.white,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                                const SizedBox(width: 8),
+                                Container(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 8,
+                                    vertical: 2,
+                                  ),
+                                  decoration: BoxDecoration(
+                                    color: const Color(0xFF00F7FF)
+                                        .withOpacity(0.1),
+                                    borderRadius: BorderRadius.circular(12),
+                                    border: Border.all(
+                                      color: const Color(0xFF00F7FF),
+                                      width: 1,
+                                    ),
+                                  ),
+                                  child: Text(
+                                    '$participantsCount人',
+                                    style: const TextStyle(
+                                      fontSize: 12,
+                                      color: Color(0xFF00F7FF),
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                            subtitle: lastMessage.isNotEmpty
+                                ? Text(
+                                    lastMessage,
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                    style:
+                                        const TextStyle(color: Colors.white70),
+                                  )
+                                : const Text(
+                                    'メッセージはありません',
+                                    style: TextStyle(
+                                      color: Colors.white38,
+                                      fontStyle: FontStyle.italic,
+                                    ),
+                                  ),
+                            trailing: lastMessageTime != null
+                                ? Text(
+                                    _formatDateTime(lastMessageTime),
+                                    style: const TextStyle(
+                                      fontSize: 12,
+                                      color: Colors.white38,
+                                    ),
+                                  )
+                                : null,
+                            onTap: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) => MessageDetailScreen(
+                                    messageId: openChatId,
+                                    isOpenChat: true,
+                                  ),
+                                ),
+                              );
+                            },
+                          ),
+                        );
+                      },
+                    ),
+                    if (!_isLoading && !_hasError)
+                      const Padding(
+                        padding: EdgeInsets.symmetric(vertical: 8.0),
+                        child: Text(
+                          'プライベートメッセージ',
                           style: TextStyle(
-                            color: Colors.grey,
                             fontSize: 16,
-                            fontWeight: FontWeight.w500,
+                            fontWeight: FontWeight.bold,
+                            color: Color(0xFF00F7FF),
                           ),
                         ),
-                        SizedBox(height: 8),
-                        Text(
-                          'メッセージを送信して会話を始めましょう',
-                          style: TextStyle(color: Colors.grey, fontSize: 14),
-                        ),
-                      ],
+                      ),
+                  ],
+                ),
+              ),
+            ),
+
+            // プライベートメッセージ
+            StreamBuilder<List<Message>>(
+              stream: _getMessagesStream(currentUserId),
+              builder: (context, snapshot) {
+                if (snapshot.hasError) {
+                  print('Error in message stream: ${snapshot.error}');
+                  return SliverToBoxAdapter(
+                    child: Center(
+                      child: Text(
+                        'エラーが発生しました: ${snapshot.error}',
+                        style: const TextStyle(color: Colors.white),
+                      ),
                     ),
+                  );
+                }
+
+                if (snapshot.connectionState == ConnectionState.waiting) {
+                  return const SliverToBoxAdapter(
+                    child: Center(
+                      child: CircularProgressIndicator(
+                        color: Color(0xFF00F7FF),
+                      ),
+                    ),
+                  );
+                }
+
+                final messages = snapshot.data ?? [];
+
+                if (messages.isEmpty) {
+                  return const SliverFillRemaining(
+                    hasScrollBody: false,
+                    child: Center(
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(
+                            Icons.message_outlined,
+                            size: 48,
+                            color: Color(0xFF00F7FF),
+                          ),
+                          SizedBox(height: 16),
+                          Text(
+                            'プライベートメッセージはまだありません',
+                            style: TextStyle(
+                              color: Colors.white70,
+                              fontSize: 16,
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                          SizedBox(height: 8),
+                          Text(
+                            'メッセージを送信して会話を始めましょう',
+                            style: TextStyle(
+                              color: Colors.white38,
+                              fontSize: 14,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  );
+                }
+
+                return SliverList(
+                  delegate: SliverChildBuilderDelegate(
+                    (context, index) {
+                      final message = messages[index];
+                      return Container(
+                        margin: const EdgeInsets.symmetric(
+                          horizontal: 16,
+                          vertical: 4,
+                        ),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFF1A1B3F).withOpacity(0.5),
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(
+                            color: const Color(0xFF00F7FF),
+                            width: 1,
+                          ),
+                          boxShadow: [
+                            BoxShadow(
+                              color: const Color(0xFF00F7FF).withOpacity(0.1),
+                              blurRadius: 8,
+                              spreadRadius: -2,
+                            ),
+                          ],
+                        ),
+                        child: MessageListTile(message: message),
+                      );
+                    },
+                    childCount: messages.length,
                   ),
                 );
-              }
-
-              return SliverList(
-                delegate: SliverChildBuilderDelegate(
-                  (context, index) {
-                    final message = messages[index];
-                    return MessageListTile(message: message);
-                  },
-                  childCount: messages.length,
-                ),
-              );
-            },
-          ),
+              },
+            ),
+          ],
         ],
-      ],
+      ),
     );
   }
 
@@ -382,15 +507,50 @@ class MessageListTile extends StatelessWidget {
         isReceiver ? message.senderImageUrl : message.receiverImageUrl;
 
     return ListTile(
-      leading: CircleAvatar(
-        backgroundImage: imageUrl.isNotEmpty ? NetworkImage(imageUrl) : null,
-        child: imageUrl.isEmpty ? const Icon(Icons.person) : null,
+      contentPadding: const EdgeInsets.symmetric(
+        horizontal: 16,
+        vertical: 8,
       ),
-      title: Text(displayName),
+      leading: Container(
+        decoration: BoxDecoration(
+          shape: BoxShape.circle,
+          border: Border.all(
+            color: const Color(0xFF00F7FF),
+            width: 2,
+          ),
+          boxShadow: [
+            BoxShadow(
+              color: const Color(0xFF00F7FF).withOpacity(0.2),
+              blurRadius: 8,
+              spreadRadius: -2,
+            ),
+          ],
+        ),
+        child: CircleAvatar(
+          backgroundColor: const Color(0xFF1A1B3F),
+          backgroundImage: imageUrl.isNotEmpty ? NetworkImage(imageUrl) : null,
+          child: imageUrl.isEmpty
+              ? const Icon(
+                  Icons.person,
+                  color: Color(0xFF00F7FF),
+                )
+              : null,
+        ),
+      ),
+      title: Text(
+        displayName,
+        style: const TextStyle(
+          color: Colors.white,
+          fontWeight: FontWeight.bold,
+        ),
+      ),
       subtitle: Text(
         message.lastMessage,
         maxLines: 1,
         overflow: TextOverflow.ellipsis,
+        style: const TextStyle(
+          color: Colors.white70,
+        ),
       ),
       trailing: Column(
         mainAxisAlignment: MainAxisAlignment.center,
@@ -398,7 +558,10 @@ class MessageListTile extends StatelessWidget {
         children: [
           Text(
             _formatDateTime(message.lastMessageTime),
-            style: const TextStyle(fontSize: 12, color: Colors.grey),
+            style: const TextStyle(
+              fontSize: 12,
+              color: Colors.white38,
+            ),
           ),
           if (!message.isRead && message.receiverId == currentUserId)
             Container(
@@ -406,8 +569,15 @@ class MessageListTile extends StatelessWidget {
               width: 10,
               height: 10,
               decoration: const BoxDecoration(
-                color: Colors.blue,
+                color: Color(0xFF00F7FF),
                 shape: BoxShape.circle,
+                boxShadow: [
+                  BoxShadow(
+                    color: Color(0x8000F7FF),
+                    blurRadius: 4,
+                    spreadRadius: 1,
+                  ),
+                ],
               ),
             ),
         ],
