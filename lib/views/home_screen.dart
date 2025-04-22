@@ -8,6 +8,9 @@ import 'tabs/profile_tab.dart';
 import 'tabs/info_tab.dart';
 import 'posts/post_image_picker_screen.dart';
 import 'image_picker_screen.dart';
+import 'jobs/part_time_job_list_screen.dart';
+import 'jobs/create_job_screen.dart';
+import 'jobs/create_part_time_job_screen.dart';
 
 class HomeScreen extends ConsumerStatefulWidget {
   const HomeScreen({super.key});
@@ -18,6 +21,7 @@ class HomeScreen extends ConsumerStatefulWidget {
 
 class _HomeScreenState extends ConsumerState<HomeScreen> {
   int _currentIndex = 0;
+  String? _selectedJobType;
 
   final List<Widget> _tabs = [
     const HomeTab(),
@@ -26,6 +30,116 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     const InfoTab(),
     const ProfileTab(),
   ];
+
+  void _showJobTypeModal() {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      builder: (BuildContext context) {
+        return Container(
+          decoration: BoxDecoration(
+            gradient: const LinearGradient(
+              begin: Alignment.topCenter,
+              end: Alignment.bottomCenter,
+              colors: [
+                Color(0xFF1A1B3F),
+                Color(0xFF0B1221),
+              ],
+            ),
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+            border: Border.all(
+              color: const Color(0xFF00F7FF),
+              width: 1,
+            ),
+            boxShadow: [
+              BoxShadow(
+                color: const Color(0xFF00F7FF).withOpacity(0.2),
+                blurRadius: 10,
+                spreadRadius: -5,
+              ),
+            ],
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                margin: const EdgeInsets.only(top: 8),
+                width: 40,
+                height: 4,
+                decoration: BoxDecoration(
+                  color: const Color(0xFF00F7FF).withOpacity(0.5),
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
+              ListTile(
+                leading: Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    border: Border.all(
+                      color: const Color(0xFF00F7FF),
+                      width: 1,
+                    ),
+                  ),
+                  child: const Icon(
+                    Icons.business_center,
+                    color: Color(0xFF00F7FF),
+                  ),
+                ),
+                title: const Text(
+                  '案件を探す',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                onTap: () {
+                  setState(() {
+                    _selectedJobType = 'project';
+                    _currentIndex = 2;
+                  });
+                  Navigator.pop(context);
+                },
+              ),
+              ListTile(
+                leading: Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    border: Border.all(
+                      color: const Color(0xFF00F7FF),
+                      width: 1,
+                    ),
+                  ),
+                  child: const Icon(
+                    Icons.work,
+                    color: Color(0xFF00F7FF),
+                  ),
+                ),
+                title: const Text(
+                  'アルバイトを探す',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                onTap: () {
+                  Navigator.pop(context);
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => const PartTimeJobListScreen(),
+                    ),
+                  );
+                },
+              ),
+              const SizedBox(height: 16),
+            ],
+          ),
+        );
+      },
+    );
+  }
 
   void _showCreateOptionsModal() {
     showModalBottomSheet(
@@ -131,6 +245,70 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                   );
                 },
               ),
+              ListTile(
+                leading: Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    border: Border.all(
+                      color: const Color(0xFF00F7FF),
+                      width: 1,
+                    ),
+                  ),
+                  child: const Icon(
+                    Icons.business_center,
+                    color: Color(0xFF00F7FF),
+                  ),
+                ),
+                title: const Text(
+                  '案件を募集',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                onTap: () {
+                  Navigator.pop(context);
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => const CreateJobScreen(),
+                    ),
+                  );
+                },
+              ),
+              ListTile(
+                leading: Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    border: Border.all(
+                      color: const Color(0xFF00F7FF),
+                      width: 1,
+                    ),
+                  ),
+                  child: const Icon(
+                    Icons.work,
+                    color: Color(0xFF00F7FF),
+                  ),
+                ),
+                title: const Text(
+                  'アルバイトを募集',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                onTap: () {
+                  Navigator.pop(context);
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => const CreatePartTimeJobScreen(),
+                    ),
+                  );
+                },
+              ),
               const SizedBox(height: 16),
             ],
           ),
@@ -202,9 +380,13 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
               elevation: 0,
               selectedIndex: _currentIndex,
               onDestinationSelected: (index) {
-                setState(() {
-                  _currentIndex = index;
-                });
+                if (index == 2) {
+                  _showJobTypeModal();
+                } else {
+                  setState(() {
+                    _currentIndex = index;
+                  });
+                }
               },
               labelBehavior: NavigationDestinationLabelBehavior.alwaysShow,
               destinations: [
