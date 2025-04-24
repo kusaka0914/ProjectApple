@@ -9,7 +9,39 @@ class PartTimeJobListScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.transparent,
+      backgroundColor: const Color(0xFF0B1221),
+      appBar: AppBar(
+        backgroundColor: const Color(0xFF1A1B3F),
+        elevation: 0,
+        title: const Text(
+          'アルバイト一覧',
+          style: TextStyle(
+            color: Colors.white,
+            fontSize: 18,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+        bottom: PreferredSize(
+          preferredSize: const Size.fromHeight(1),
+          child: Container(
+            decoration: BoxDecoration(
+              border: const Border(
+                bottom: BorderSide(
+                  color: Color(0xFF00F7FF),
+                  width: 1,
+                ),
+              ),
+              boxShadow: [
+                BoxShadow(
+                  color: const Color(0xFF00F7FF).withOpacity(0.2),
+                  blurRadius: 10,
+                  spreadRadius: -5,
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
       body: Container(
         decoration: const BoxDecoration(
           gradient: LinearGradient(
@@ -18,133 +50,84 @@ class PartTimeJobListScreen extends StatelessWidget {
             colors: [
               Color(0xFF0B1221),
               Color(0xFF1A1B3F),
+              Color(0xFF0B1221),
             ],
           ),
         ),
-        child: CustomScrollView(
-          slivers: [
-            SliverAppBar(
-              backgroundColor: const Color(0xFF1A1B3F),
-              pinned: true,
-              leading: IconButton(
-                icon: const Icon(
-                  Icons.arrow_back,
+        child: StreamBuilder<QuerySnapshot>(
+          stream: FirebaseFirestore.instance
+              .collection('partTimeJobs')
+              .orderBy('createdAt', descending: true)
+              .snapshots(),
+          builder: (context, snapshot) {
+            if (snapshot.hasError) {
+              return const Center(
+                child: Text(
+                  'エラーが発生しました',
+                  style: TextStyle(color: Colors.white70),
+                ),
+              );
+            }
+
+            if (snapshot.connectionState == ConnectionState.waiting) {
+              return const Center(
+                child: CircularProgressIndicator(
                   color: Color(0xFF00F7FF),
                 ),
-                onPressed: () => Navigator.pop(context),
-              ),
-              title: const Text(
-                'アルバイト一覧',
-                style: TextStyle(
-                  color: Colors.white,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-              flexibleSpace: Container(
-                decoration: BoxDecoration(
-                  border: const Border(
-                    bottom: BorderSide(
+              );
+            }
+
+            final jobs = snapshot.data?.docs ?? [];
+
+            if (jobs.isEmpty) {
+              return const Center(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(
+                      Icons.work_outline,
+                      size: 48,
                       color: Color(0xFF00F7FF),
-                      width: 1,
                     ),
-                  ),
-                  boxShadow: [
-                    BoxShadow(
-                      color: const Color(0xFF00F7FF).withOpacity(0.2),
-                      blurRadius: 10,
-                      spreadRadius: -5,
+                    SizedBox(height: 16),
+                    Text(
+                      '現在募集中のアルバイトはありません',
+                      style: TextStyle(
+                        color: Colors.white70,
+                        fontSize: 16,
+                      ),
                     ),
                   ],
                 ),
-              ),
-            ),
-            StreamBuilder<QuerySnapshot>(
-              stream: FirebaseFirestore.instance
-                  .collection('partTimeJobs')
-                  .orderBy('createdAt', descending: true)
-                  .snapshots(),
-              builder: (context, snapshot) {
-                if (snapshot.hasError) {
-                  return const SliverFillRemaining(
-                    child: Center(
-                      child: Text(
-                        'エラーが発生しました',
-                        style: TextStyle(color: Colors.white70),
-                      ),
-                    ),
-                  );
-                }
+              );
+            }
 
-                if (snapshot.connectionState == ConnectionState.waiting) {
-                  return const SliverFillRemaining(
-                    child: Center(
-                      child: CircularProgressIndicator(
-                        color: Color(0xFF00F7FF),
-                      ),
-                    ),
-                  );
-                }
+            return ListView.builder(
+              padding: const EdgeInsets.all(16),
+              itemCount: jobs.length,
+              itemBuilder: (context, index) {
+                final job = jobs[index].data() as Map<String, dynamic>;
+                final jobId = jobs[index].id;
+                final createdAt = (job['createdAt'] as Timestamp).toDate();
+                final timeAgo = timeago.format(createdAt, locale: 'ja');
 
-                final jobs = snapshot.data?.docs ?? [];
-
-                if (jobs.isEmpty) {
-                  return const SliverFillRemaining(
-                    child: Center(
-                      child: Column(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Icon(
-                            Icons.work_outline,
-                            size: 48,
-                            color: Color(0xFF00F7FF),
-                          ),
-                          SizedBox(height: 16),
-                          Text(
-                            '現在募集中のアルバイトはありません',
-                            style: TextStyle(
-                              color: Colors.white70,
-                              fontSize: 16,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  );
-                }
-
-                return SliverPadding(
-                  padding: const EdgeInsets.all(16),
-                  sliver: SliverList(
-                    delegate: SliverChildBuilderDelegate(
-                      (context, index) {
-                        final job = jobs[index].data() as Map<String, dynamic>;
-                        final jobId = jobs[index].id;
-                        final createdAt =
-                            (job['createdAt'] as Timestamp).toDate();
-                        final timeAgo = timeago.format(createdAt, locale: 'ja');
-
-                        return Padding(
-                          padding: const EdgeInsets.only(bottom: 16),
-                          child: _buildJobCard(
-                            context,
-                            jobId: jobId,
-                            title: job['title'] as String? ?? '',
-                            hourlyWage: job['hourlyWage'] as int? ?? 0,
-                            location: job['location'] as String? ?? '',
-                            workingHours: job['workingHours'] as String? ?? '',
-                            companyName: job['companyName'] as String? ?? '',
-                            companyIconUrl: job['companyIconUrl'] as String?,
-                            timeAgo: timeAgo,
-                          ),
-                        );
-                      },
-                      childCount: jobs.length,
-                    ),
+                return Padding(
+                  padding: const EdgeInsets.only(bottom: 16),
+                  child: _buildJobCard(
+                    context,
+                    jobId: jobId,
+                    title: job['title'] as String? ?? '',
+                    hourlyWage: job['hourlyWage'] as int? ?? 0,
+                    location: job['location'] as String? ?? '',
+                    workingHours: job['workingHours'] as String? ?? '',
+                    companyName: job['companyName'] as String? ?? '',
+                    companyIconUrl: job['companyIconUrl'] as String?,
+                    timeAgo: timeAgo,
                   ),
                 );
               },
-            ),
-          ],
+            );
+          },
         ),
       ),
     );

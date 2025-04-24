@@ -95,71 +95,71 @@ class InfoTab extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      decoration: const BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topCenter,
-          end: Alignment.bottomCenter,
-          colors: [
-            Color(0xFF0B1221),
-            Color(0xFF1A1B3F),
-          ],
+    return Scaffold(
+      backgroundColor: const Color(0xFF0B1221),
+      appBar: AppBar(
+        backgroundColor: const Color(0xFF1A1B3F),
+        elevation: 0,
+        title: const Text(
+          '情報',
+          style: TextStyle(
+            color: Colors.white,
+            fontSize: 18,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+        bottom: PreferredSize(
+          preferredSize: const Size.fromHeight(1),
+          child: Container(
+            decoration: BoxDecoration(
+              border: const Border(
+                bottom: BorderSide(
+                  color: Color(0xFF00F7FF),
+                  width: 1,
+                ),
+              ),
+              boxShadow: [
+                BoxShadow(
+                  color: const Color(0xFF00F7FF).withOpacity(0.2),
+                  blurRadius: 10,
+                  spreadRadius: -5,
+                ),
+              ],
+            ),
+          ),
         ),
       ),
-      child: CustomScrollView(
-        slivers: [
-          SliverAppBar(
-            title: const Text(
-              '情報',
-              style: TextStyle(
-                color: Colors.white,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-            floating: true,
-            backgroundColor: const Color(0xFF1A1B3F),
-            flexibleSpace: Container(
-              decoration: BoxDecoration(
-                border: const Border(
-                  bottom: BorderSide(
-                    color: Color(0xFF00F7FF),
-                    width: 1,
-                  ),
-                ),
-                boxShadow: [
-                  BoxShadow(
-                    color: const Color(0xFF00F7FF).withOpacity(0.2),
-                    blurRadius: 10,
-                    spreadRadius: -5,
-                  ),
-                ],
-              ),
-            ),
+      body: Container(
+        decoration: const BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+            colors: [
+              Color(0xFF0B1221),
+              Color(0xFF1A1B3F),
+              Color(0xFF0B1221),
+            ],
           ),
-          SliverPadding(
-            padding: const EdgeInsets.all(16),
-            sliver: SliverGrid(
-              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                crossAxisCount: 4,
-                mainAxisSpacing: 16,
-                crossAxisSpacing: 16,
-                childAspectRatio: 0.8,
-              ),
-              delegate: SliverChildBuilderDelegate(
-                (context, index) {
-                  final category = _categories[index];
-                  return _buildCategoryButton(
-                    context,
-                    icon: category['icon'] as IconData,
-                    label: category['label'] as String,
-                    type: category['type'] as String,
-                  );
-                },
-                childCount: _categories.length,
-              ),
-            ),
+        ),
+        child: GridView.builder(
+          padding: const EdgeInsets.all(16),
+          gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+            crossAxisCount: 4,
+            mainAxisSpacing: 16,
+            crossAxisSpacing: 16,
+            childAspectRatio: 0.8,
           ),
-        ],
+          itemCount: _categories.length,
+          itemBuilder: (context, index) {
+            final category = _categories[index];
+            return _buildCategoryButton(
+              context,
+              icon: category['icon'] as IconData,
+              label: category['label'] as String,
+              type: category['type'] as String,
+            );
+          },
+        ),
       ),
     );
   }

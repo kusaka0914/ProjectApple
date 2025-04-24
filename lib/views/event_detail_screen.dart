@@ -115,19 +115,44 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
   Widget build(BuildContext context) {
     final eventDate = widget.event.date.toDate();
     return Scaffold(
-      backgroundColor: Colors.transparent,
+      backgroundColor: const Color(0xFF0B1221),
       appBar: AppBar(
         backgroundColor: const Color(0xFF1A1B3F),
-        title: Text(
-          widget.event.title,
-          style: const TextStyle(color: Colors.white),
-        ),
+        elevation: 0,
         leading: IconButton(
           icon: const Icon(
             Icons.arrow_back,
             color: Color(0xFF00F7FF),
           ),
           onPressed: () => Navigator.pop(context),
+        ),
+        title: Text(
+          widget.event.title,
+          style: const TextStyle(
+            color: Colors.white,
+            fontSize: 18,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+        bottom: PreferredSize(
+          preferredSize: const Size.fromHeight(1),
+          child: Container(
+            decoration: BoxDecoration(
+              border: const Border(
+                bottom: BorderSide(
+                  color: Color(0xFF00F7FF),
+                  width: 1,
+                ),
+              ),
+              boxShadow: [
+                BoxShadow(
+                  color: const Color(0xFF00F7FF).withOpacity(0.2),
+                  blurRadius: 10,
+                  spreadRadius: -5,
+                ),
+              ],
+            ),
+          ),
         ),
       ),
       body: Container(
@@ -138,6 +163,7 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
             colors: [
               Color(0xFF0B1221),
               Color(0xFF1A1B3F),
+              Color(0xFF0B1221),
             ],
           ),
         ),

@@ -8,139 +8,132 @@ class JobTab extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      decoration: const BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topCenter,
-          end: Alignment.bottomCenter,
-          colors: [
-            Color(0xFF0B1221),
-            Color(0xFF1A1B3F),
-          ],
+    return Scaffold(
+      backgroundColor: const Color(0xFF0B1221),
+      appBar: AppBar(
+        backgroundColor: const Color(0xFF1A1B3F),
+        elevation: 0,
+        title: const Text(
+          '案件一覧',
+          style: TextStyle(
+            color: Colors.white,
+            fontSize: 18,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+        bottom: PreferredSize(
+          preferredSize: const Size.fromHeight(1),
+          child: Container(
+            decoration: BoxDecoration(
+              border: const Border(
+                bottom: BorderSide(
+                  color: Color(0xFF00F7FF),
+                  width: 1,
+                ),
+              ),
+              boxShadow: [
+                BoxShadow(
+                  color: const Color(0xFF00F7FF).withOpacity(0.2),
+                  blurRadius: 10,
+                  spreadRadius: -5,
+                ),
+              ],
+            ),
+          ),
         ),
       ),
-      child: CustomScrollView(
-        slivers: [
-          SliverAppBar(
-            title: const Text(
-              '案件一覧',
-              style: TextStyle(
-                color: Colors.white,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-            floating: true,
-            backgroundColor: const Color(0xFF1A1B3F),
-            flexibleSpace: Container(
-              decoration: BoxDecoration(
-                border: const Border(
-                  bottom: BorderSide(
-                    color: Color(0xFF00F7FF),
-                    width: 1,
-                  ),
-                ),
-                boxShadow: [
-                  BoxShadow(
-                    color: const Color(0xFF00F7FF).withOpacity(0.2),
-                    blurRadius: 10,
-                    spreadRadius: -5,
-                  ),
-                ],
-              ),
-            ),
+      body: Container(
+        decoration: const BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+            colors: [
+              Color(0xFF0B1221),
+              Color(0xFF1A1B3F),
+              Color(0xFF0B1221),
+            ],
           ),
-          StreamBuilder<QuerySnapshot>(
-            stream: FirebaseFirestore.instance
-                .collection('jobs')
-                .orderBy('createdAt', descending: true)
-                .snapshots(),
-            builder: (context, snapshot) {
-              if (snapshot.hasError) {
-                return const SliverFillRemaining(
-                  child: Center(
-                    child: Text(
-                      'エラーが発生しました',
-                      style: TextStyle(color: Colors.white70),
-                    ),
-                  ),
-                );
-              }
-
-              if (snapshot.connectionState == ConnectionState.waiting) {
-                return const SliverFillRemaining(
-                  child: Center(
-                    child: CircularProgressIndicator(
-                      color: Color(0xFF00F7FF),
-                    ),
-                  ),
-                );
-              }
-
-              final jobs = snapshot.data?.docs ?? [];
-
-              if (jobs.isEmpty) {
-                return const SliverFillRemaining(
-                  child: Center(
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Icon(
-                          Icons.work_outline,
-                          size: 48,
-                          color: Color(0xFF00F7FF),
-                        ),
-                        SizedBox(height: 16),
-                        Text(
-                          '現在募集中の案件はありません',
-                          style: TextStyle(
-                            color: Colors.white70,
-                            fontSize: 16,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                );
-              }
-
-              return SliverPadding(
-                padding: const EdgeInsets.all(16),
-                sliver: SliverList(
-                  delegate: SliverChildBuilderDelegate(
-                    (context, index) {
-                      final job = jobs[index].data() as Map<String, dynamic>;
-                      final jobId = jobs[index].id;
-                      final createdAt =
-                          (job['createdAt'] as Timestamp).toDate();
-                      final timeAgo = timeago.format(createdAt, locale: 'ja');
-                      final deadline = (job['deadline'] as Timestamp).toDate();
-                      final daysUntilDeadline =
-                          deadline.difference(DateTime.now()).inDays;
-
-                      return Padding(
-                        padding: const EdgeInsets.only(bottom: 16),
-                        child: _buildJobCard(
-                          context,
-                          jobId: jobId,
-                          title: job['title'] as String? ?? '',
-                          budget: job['budget'] as int? ?? 0,
-                          imageUrl: job['imageUrl'] as String?,
-                          userName: job['userName'] as String? ?? '名無しさん',
-                          userPhotoUrl: job['userPhotoUrl'] as String?,
-                          timeAgo: timeAgo,
-                          contractCount: job['contractCount'] as int? ?? 0,
-                          numberOfPeople: job['numberOfPeople'] as int? ?? 1,
-                          daysUntilDeadline: daysUntilDeadline,
-                        ),
-                      );
-                    },
-                    childCount: jobs.length,
-                  ),
+        ),
+        child: StreamBuilder<QuerySnapshot>(
+          stream: FirebaseFirestore.instance
+              .collection('jobs')
+              .orderBy('createdAt', descending: true)
+              .snapshots(),
+          builder: (context, snapshot) {
+            if (snapshot.hasError) {
+              return const Center(
+                child: Text(
+                  'エラーが発生しました',
+                  style: TextStyle(color: Colors.white70),
                 ),
               );
-            },
-          ),
-        ],
+            }
+
+            if (snapshot.connectionState == ConnectionState.waiting) {
+              return const Center(
+                child: CircularProgressIndicator(
+                  color: Color(0xFF00F7FF),
+                ),
+              );
+            }
+
+            final jobs = snapshot.data?.docs ?? [];
+
+            if (jobs.isEmpty) {
+              return const Center(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(
+                      Icons.work_outline,
+                      size: 48,
+                      color: Color(0xFF00F7FF),
+                    ),
+                    SizedBox(height: 16),
+                    Text(
+                      '現在募集中の案件はありません',
+                      style: TextStyle(
+                        color: Colors.white70,
+                        fontSize: 16,
+                      ),
+                    ),
+                  ],
+                ),
+              );
+            }
+
+            return ListView.builder(
+              padding: const EdgeInsets.all(16),
+              itemCount: jobs.length,
+              itemBuilder: (context, index) {
+                final job = jobs[index].data() as Map<String, dynamic>;
+                final jobId = jobs[index].id;
+                final createdAt = (job['createdAt'] as Timestamp).toDate();
+                final timeAgo = timeago.format(createdAt, locale: 'ja');
+                final deadline = (job['deadline'] as Timestamp).toDate();
+                final daysUntilDeadline =
+                    deadline.difference(DateTime.now()).inDays;
+
+                return Padding(
+                  padding: const EdgeInsets.only(bottom: 16),
+                  child: _buildJobCard(
+                    context,
+                    jobId: jobId,
+                    title: job['title'] as String? ?? '',
+                    budget: job['budget'] as int? ?? 0,
+                    imageUrl: job['imageUrl'] as String?,
+                    userName: job['userName'] as String? ?? '名無しさん',
+                    userPhotoUrl: job['userPhotoUrl'] as String?,
+                    timeAgo: timeAgo,
+                    contractCount: job['contractCount'] as int? ?? 0,
+                    numberOfPeople: job['numberOfPeople'] as int? ?? 1,
+                    daysUntilDeadline: daysUntilDeadline,
+                  ),
+                );
+              },
+            );
+          },
+        ),
       ),
     );
   }

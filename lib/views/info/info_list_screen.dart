@@ -19,7 +19,46 @@ class InfoListScreen extends StatelessWidget {
     timeago.setLocaleMessages('ja', timeago.JaMessages());
 
     return Scaffold(
-      backgroundColor: Colors.transparent,
+      backgroundColor: const Color(0xFF0B1221),
+      appBar: AppBar(
+        backgroundColor: const Color(0xFF1A1B3F),
+        elevation: 0,
+        leading: IconButton(
+          icon: const Icon(
+            Icons.arrow_back,
+            color: Color(0xFF00F7FF),
+          ),
+          onPressed: () => Navigator.pop(context),
+        ),
+        title: Text(
+          category,
+          style: const TextStyle(
+            color: Colors.white,
+            fontSize: 18,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+        bottom: PreferredSize(
+          preferredSize: const Size.fromHeight(1),
+          child: Container(
+            decoration: BoxDecoration(
+              border: const Border(
+                bottom: BorderSide(
+                  color: Color(0xFF00F7FF),
+                  width: 1,
+                ),
+              ),
+              boxShadow: [
+                BoxShadow(
+                  color: const Color(0xFF00F7FF).withOpacity(0.2),
+                  blurRadius: 10,
+                  spreadRadius: -5,
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
       body: Container(
         decoration: const BoxDecoration(
           gradient: LinearGradient(
@@ -28,6 +67,7 @@ class InfoListScreen extends StatelessWidget {
             colors: [
               Color(0xFF0B1221),
               Color(0xFF1A1B3F),
+              Color(0xFF0B1221),
             ],
           ),
         ),
@@ -39,158 +79,88 @@ class InfoListScreen extends StatelessWidget {
               .snapshots(),
           builder: (context, snapshot) {
             if (snapshot.hasError) {
-              return CustomScrollView(
-                slivers: [
-                  _buildAppBar(context),
-                  const SliverFillRemaining(
-                    child: Center(
-                      child: Column(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Icon(
-                            Icons.error_outline,
-                            size: 48,
-                            color: Color(0xFF00F7FF),
-                          ),
-                          SizedBox(height: 16),
-                          Text(
-                            'エラーが発生しました',
-                            style: TextStyle(
-                              color: Colors.white70,
-                              fontSize: 16,
-                            ),
-                          ),
-                        ],
+              return Center(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const Icon(
+                      Icons.error_outline,
+                      size: 48,
+                      color: Color(0xFF00F7FF),
+                    ),
+                    const SizedBox(height: 16),
+                    Text(
+                      'エラーが発生しました: ${snapshot.error}',
+                      style: const TextStyle(
+                        color: Colors.white70,
+                        fontSize: 16,
                       ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               );
             }
 
             if (snapshot.connectionState == ConnectionState.waiting) {
-              return CustomScrollView(
-                slivers: [
-                  _buildAppBar(context),
-                  const SliverFillRemaining(
-                    child: Center(
-                      child: CircularProgressIndicator(
-                        color: Color(0xFF00F7FF),
-                      ),
-                    ),
-                  ),
-                ],
+              return const Center(
+                child: CircularProgressIndicator(
+                  color: Color(0xFF00F7FF),
+                ),
               );
             }
 
             final posts = snapshot.data?.docs ?? [];
 
             if (posts.isEmpty) {
-              return CustomScrollView(
-                slivers: [
-                  _buildAppBar(context),
-                  SliverFillRemaining(
-                    child: Center(
-                      child: Column(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Icon(
-                            _getCategoryIcon(),
-                            size: 48,
-                            color: const Color(0xFF00F7FF),
-                          ),
-                          const SizedBox(height: 16),
-                          Text(
-                            '$categoryの投稿はまだありません',
-                            style: const TextStyle(
-                              color: Colors.white70,
-                              fontSize: 16,
-                            ),
-                          ),
-                        ],
+              return Center(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(
+                      _getCategoryIcon(),
+                      size: 48,
+                      color: const Color(0xFF00F7FF),
+                    ),
+                    const SizedBox(height: 16),
+                    Text(
+                      '$categoryの投稿はまだありません',
+                      style: const TextStyle(
+                        color: Colors.white70,
+                        fontSize: 16,
                       ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               );
             }
 
-            return CustomScrollView(
-              slivers: [
-                _buildAppBar(context),
-                SliverPadding(
-                  padding: const EdgeInsets.all(16),
-                  sliver: SliverList(
-                    delegate: SliverChildBuilderDelegate(
-                      (context, index) {
-                        final post =
-                            posts[index].data() as Map<String, dynamic>;
-                        final postId = posts[index].id;
-                        final createdAt =
-                            (post['createdAt'] as Timestamp).toDate();
-                        final timeAgo = timeago.format(createdAt, locale: 'ja');
+            return ListView.builder(
+              padding: const EdgeInsets.all(16),
+              itemCount: posts.length,
+              itemBuilder: (context, index) {
+                final post = posts[index].data() as Map<String, dynamic>;
+                final postId = posts[index].id;
+                final createdAt = (post['createdAt'] as Timestamp).toDate();
+                final timeAgo = timeago.format(createdAt, locale: 'ja');
 
-                        return Padding(
-                          padding: const EdgeInsets.only(bottom: 16),
-                          child: _buildPostCard(
-                            context,
-                            postId: postId,
-                            title: post['title'] as String? ?? '',
-                            content: post['content'] as String? ?? '',
-                            imageUrl: post['imageUrl'] as String?,
-                            userName: post['userName'] as String? ?? '名無しさん',
-                            userPhotoUrl: post['userPhotoUrl'] as String?,
-                            timeAgo: timeAgo,
-                            likes: post['likes'] as int? ?? 0,
-                            comments: post['comments'] as int? ?? 0,
-                          ),
-                        );
-                      },
-                      childCount: posts.length,
-                    ),
+                return Padding(
+                  padding: const EdgeInsets.only(bottom: 16),
+                  child: _buildPostCard(
+                    context,
+                    postId: postId,
+                    title: post['title'] as String? ?? '',
+                    content: post['content'] as String? ?? '',
+                    imageUrl: post['imageUrl'] as String?,
+                    userName: post['userName'] as String? ?? '名無しさん',
+                    userPhotoUrl: post['userPhotoUrl'] as String?,
+                    timeAgo: timeAgo,
+                    likes: post['likes'] as int? ?? 0,
+                    comments: post['comments'] as int? ?? 0,
                   ),
-                ),
-              ],
+                );
+              },
             );
           },
-        ),
-      ),
-    );
-  }
-
-  Widget _buildAppBar(BuildContext context) {
-    return SliverAppBar(
-      backgroundColor: const Color(0xFF1A1B3F),
-      pinned: true,
-      leading: IconButton(
-        icon: const Icon(
-          Icons.arrow_back,
-          color: Color(0xFF00F7FF),
-        ),
-        onPressed: () => Navigator.pop(context),
-      ),
-      title: Text(
-        category,
-        style: const TextStyle(
-          color: Colors.white,
-          fontWeight: FontWeight.bold,
-        ),
-      ),
-      flexibleSpace: Container(
-        decoration: BoxDecoration(
-          border: const Border(
-            bottom: BorderSide(
-              color: Color(0xFF00F7FF),
-              width: 1,
-            ),
-          ),
-          boxShadow: [
-            BoxShadow(
-              color: const Color(0xFF00F7FF).withOpacity(0.2),
-              blurRadius: 10,
-              spreadRadius: -5,
-            ),
-          ],
         ),
       ),
     );

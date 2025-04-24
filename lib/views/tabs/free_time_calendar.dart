@@ -176,60 +176,185 @@ class _FreeTimeCalendarState extends State<FreeTimeCalendar> {
             children: [
               Padding(
                 padding: const EdgeInsets.all(8.0),
-                child: TextField(
-                  controller: _searchController,
-                  decoration: InputDecoration(
-                    hintText: 'イベントを検索',
-                    prefixIcon: const Icon(Icons.search),
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(30),
+                child: Container(
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF1A1B3F),
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(
+                      color: const Color(0xFF00F7FF),
+                      width: 1,
+                    ),
+                    boxShadow: [
+                      BoxShadow(
+                        color: const Color(0xFF00F7FF).withOpacity(0.1),
+                        blurRadius: 8,
+                        spreadRadius: -4,
+                      ),
+                    ],
+                  ),
+                  child: TextField(
+                    controller: _searchController,
+                    style: const TextStyle(color: Colors.white),
+                    decoration: const InputDecoration(
+                      hintText: 'イベントを検索',
+                      hintStyle: TextStyle(color: Colors.white60),
+                      prefixIcon: Icon(Icons.search, color: Color(0xFF00F7FF)),
+                      border: InputBorder.none,
+                      contentPadding:
+                          EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                    ),
+                    onChanged: (value) {
+                      setState(() {
+                        _searchQuery = value;
+                      });
+                    },
+                  ),
+                ),
+              ),
+              Container(
+                margin: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: const Color(0xFF1A1B3F),
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(
+                    color: const Color(0xFF00F7FF),
+                    width: 1,
+                  ),
+                  boxShadow: [
+                    BoxShadow(
+                      color: const Color(0xFF00F7FF).withOpacity(0.2),
+                      blurRadius: 10,
+                      spreadRadius: -5,
+                    ),
+                  ],
+                ),
+                child: TableCalendar<FreeTimeEvent>(
+                  firstDay: DateTime.utc(2024, 1, 1),
+                  lastDay: DateTime.utc(2024, 12, 31),
+                  focusedDay: _focusedDay,
+                  selectedDayPredicate: (day) => isSameDay(_selectedDay, day),
+                  calendarFormat: _calendarFormat,
+                  eventLoader: _getEventsForDay,
+                  startingDayOfWeek: StartingDayOfWeek.monday,
+                  calendarStyle: const CalendarStyle(
+                    markersMaxCount: 1,
+                    markerDecoration: BoxDecoration(
+                      color: Color(0xFF00F7FF),
+                      shape: BoxShape.circle,
+                    ),
+                    markerSize: 8,
+                    selectedDecoration: BoxDecoration(
+                      color: Color(0xFF00F7FF),
+                      shape: BoxShape.circle,
+                    ),
+                    todayDecoration: BoxDecoration(
+                      color: Color(0xFF1A1B3F),
+                      shape: BoxShape.circle,
+                      border: Border.all(
+                        color: Color(0xFF00F7FF),
+                        width: 1,
+                      ),
+                    ),
+                    defaultTextStyle: TextStyle(color: Colors.white),
+                    weekendTextStyle: TextStyle(color: Colors.white70),
+                    selectedTextStyle: TextStyle(color: Colors.black),
+                    todayTextStyle: TextStyle(color: Color(0xFF00F7FF)),
+                    outsideTextStyle: TextStyle(color: Colors.white38),
+                  ),
+                  headerStyle: const HeaderStyle(
+                    titleTextStyle: TextStyle(
+                      color: Colors.white,
+                      fontSize: 17,
+                    ),
+                    formatButtonVisible: false,
+                    leftChevronIcon: Icon(
+                      Icons.chevron_left,
+                      color: Color(0xFF00F7FF),
+                    ),
+                    rightChevronIcon: Icon(
+                      Icons.chevron_right,
+                      color: Color(0xFF00F7FF),
                     ),
                   ),
-                  onChanged: (value) {
+                  daysOfWeekStyle: const DaysOfWeekStyle(
+                    weekdayStyle: TextStyle(color: Colors.white70),
+                    weekendStyle: TextStyle(color: Colors.white70),
+                  ),
+                  onDaySelected: _onDaySelected,
+                  onFormatChanged: (format) {
                     setState(() {
-                      _searchQuery = value;
+                      _calendarFormat = format;
                     });
+                  },
+                  onPageChanged: (focusedDay) {
+                    _focusedDay = focusedDay;
                   },
                 ),
               ),
-              TableCalendar<FreeTimeEvent>(
-                firstDay: DateTime.utc(2024, 1, 1),
-                lastDay: DateTime.utc(2024, 12, 31),
-                focusedDay: _focusedDay,
-                selectedDayPredicate: (day) => isSameDay(_selectedDay, day),
-                calendarFormat: _calendarFormat,
-                eventLoader: _getEventsForDay,
-                startingDayOfWeek: StartingDayOfWeek.monday,
-                calendarStyle: const CalendarStyle(
-                  markersMaxCount: 1,
-                  markerDecoration: BoxDecoration(
-                    color: Colors.blue,
-                    shape: BoxShape.circle,
-                  ),
-                ),
-                onDaySelected: _onDaySelected,
-                onFormatChanged: (format) {
-                  setState(() {
-                    _calendarFormat = format;
-                  });
-                },
-                onPageChanged: (focusedDay) {
-                  _focusedDay = focusedDay;
-                },
+              const Divider(
+                color: Color(0xFF00F7FF),
+                thickness: 0.5,
+                height: 32,
               ),
               Expanded(
                 child: ListView.builder(
-                  padding: const EdgeInsets.all(8),
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
                   itemCount: _events[_selectedDay]?.length ?? 0,
                   itemBuilder: (context, index) {
                     final event = _events[_selectedDay]![index];
-                    return Card(
-                      child: ListTile(
-                        title: Text(event.title),
-                        subtitle: Text(event.description),
-                        trailing: Text(
-                            '${event.participants.length}/${event.maxParticipants}人'),
+                    return Container(
+                      margin: const EdgeInsets.only(bottom: 16),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFF1A1B3F),
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(
+                          color: const Color(0xFF00F7FF),
+                          width: 1,
+                        ),
+                        boxShadow: [
+                          BoxShadow(
+                            color: const Color(0xFF00F7FF).withOpacity(0.1),
+                            blurRadius: 8,
+                            spreadRadius: -4,
+                          ),
+                        ],
+                      ),
+                      child: InkWell(
                         onTap: () => _showEventDetails(event),
+                        borderRadius: BorderRadius.circular(12),
+                        child: Padding(
+                          padding: const EdgeInsets.all(16),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                event.title,
+                                style: const TextStyle(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.white,
+                                ),
+                              ),
+                              const SizedBox(height: 8),
+                              Text(
+                                DateFormat('yyyy年MM月dd日 HH:mm')
+                                    .format(event.date.toDate()),
+                                style: const TextStyle(
+                                  fontSize: 14,
+                                  color: Color(0xFF00F7FF),
+                                ),
+                              ),
+                              const SizedBox(height: 4),
+                              Text(
+                                '参加予定: ${event.participants.length}/${event.maxParticipants}人',
+                                style: const TextStyle(
+                                  fontSize: 14,
+                                  color: Colors.white70,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
                       ),
                     );
                   },

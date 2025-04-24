@@ -123,13 +123,15 @@ class _PostCreateScreenState extends State<PostCreateScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.transparent,
+      backgroundColor: const Color(0xFF0B1221),
       appBar: AppBar(
         backgroundColor: const Color(0xFF1A1B3F),
+        elevation: 0,
         title: const Text(
           '新規投稿',
           style: TextStyle(
             color: Colors.white,
+            fontSize: 18,
             fontWeight: FontWeight.bold,
           ),
         ),
@@ -151,33 +153,55 @@ class _PostCreateScreenState extends State<PostCreateScreen> {
               ),
             )
           else
-            Container(
-              margin: const EdgeInsets.only(right: 8),
-              decoration: BoxDecoration(
-                boxShadow: [
-                  BoxShadow(
-                    color: const Color(0xFF00F7FF).withOpacity(0.2),
-                    blurRadius: 10,
-                    spreadRadius: -5,
-                  ),
-                ],
-              ),
-              child: TextButton.icon(
+            Padding(
+              padding: const EdgeInsets.all(8.0),
+              child: ElevatedButton(
                 onPressed: _submitPost,
-                icon: const Icon(
-                  Icons.send,
-                  color: Color(0xFF00F7FF),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Color(0x4000F7FF),
+                  foregroundColor: const Color(0xFF1A1B3F),
+                  elevation: 0,
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 20, vertical: 0),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8),
+                    side: const BorderSide(
+                      color: Color(0xFF00F7FF),
+                      width: 1,
+                    ),
+                  ),
                 ),
-                label: const Text(
+                child: const Text(
                   '投稿',
                   style: TextStyle(
                     color: Color(0xFF00F7FF),
+                    fontSize: 16,
                     fontWeight: FontWeight.bold,
                   ),
                 ),
               ),
             ),
         ],
+        bottom: PreferredSize(
+          preferredSize: const Size.fromHeight(1),
+          child: Container(
+            decoration: BoxDecoration(
+              border: const Border(
+                bottom: BorderSide(
+                  color: Color(0xFF00F7FF),
+                  width: 1,
+                ),
+              ),
+              boxShadow: [
+                BoxShadow(
+                  color: const Color(0xFF00F7FF).withOpacity(0.2),
+                  blurRadius: 10,
+                  spreadRadius: -5,
+                ),
+              ],
+            ),
+          ),
+        ),
       ),
       body: Container(
         decoration: const BoxDecoration(
@@ -187,6 +211,7 @@ class _PostCreateScreenState extends State<PostCreateScreen> {
             colors: [
               Color(0xFF0B1221),
               Color(0xFF1A1B3F),
+              Color(0xFF0B1221),
             ],
           ),
         ),

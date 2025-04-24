@@ -498,9 +498,25 @@ class _ProfileTabState extends ConsumerState<ProfileTab> {
                         ),
                       ),
                       const SizedBox(height: 20),
-                      SizedBox(
+                      Container(
                         width: double.infinity,
-                        child: ElevatedButton(
+                        padding: const EdgeInsets.all(20),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFF1A1B3F).withOpacity(0.5),
+                          borderRadius: BorderRadius.circular(15),
+                          border: Border.all(
+                            color: const Color(0xFF00F7FF),
+                            width: 1,
+                          ),
+                          boxShadow: const [
+                            BoxShadow(
+                              color: Color(0x4000F7FF),
+                              blurRadius: 10,
+                              spreadRadius: 1,
+                            ),
+                          ],
+                        ),
+                        child: TextButton(
                           onPressed: () {
                             Navigator.push(
                               context,
@@ -509,25 +525,30 @@ class _ProfileTabState extends ConsumerState<ProfileTab> {
                               ),
                             );
                           },
-                          style: ElevatedButton.styleFrom(
+                          style: TextButton.styleFrom(
                             backgroundColor: Colors.transparent,
-                            foregroundColor: const Color(0xFF00F7FF),
-                            padding: const EdgeInsets.symmetric(vertical: 15),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(10),
-                            ),
-                            side: const BorderSide(
-                              color: Color(0xFF00F7FF),
-                              width: 2,
-                            ),
-                            elevation: 0,
+                            padding: EdgeInsets.zero,
+                            minimumSize: Size.zero,
+                            tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                           ),
-                          child: const Text(
-                            'プロフィールを編集',
-                            style: TextStyle(
-                              fontSize: 16,
-                              fontWeight: FontWeight.bold,
-                            ),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              const Icon(
+                                Icons.edit,
+                                color: Color(0xFF00F7FF),
+                                size: 20,
+                              ),
+                              const SizedBox(width: 8),
+                              const Text(
+                                'プロフィールを編集',
+                                style: TextStyle(
+                                  color: Color(0xFF00F7FF),
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            ],
                           ),
                         ),
                       ),

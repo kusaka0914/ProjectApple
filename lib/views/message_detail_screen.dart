@@ -220,6 +220,38 @@ class _MessageDetailScreenState extends State<MessageDetailScreen> {
     final currentUserId = FirebaseAuth.instance.currentUser?.uid;
     if (currentUserId == null) {
       return Scaffold(
+        backgroundColor: const Color(0xFF0B1221),
+        appBar: AppBar(
+          backgroundColor: const Color(0xFF1A1B3F),
+          elevation: 0,
+          leading: IconButton(
+            icon: const Icon(
+              Icons.arrow_back,
+              color: Color(0xFF00F7FF),
+            ),
+            onPressed: () => Navigator.pop(context),
+          ),
+          bottom: PreferredSize(
+            preferredSize: const Size.fromHeight(1),
+            child: Container(
+              decoration: BoxDecoration(
+                border: const Border(
+                  bottom: BorderSide(
+                    color: Color(0xFF00F7FF),
+                    width: 1,
+                  ),
+                ),
+                boxShadow: [
+                  BoxShadow(
+                    color: const Color(0xFF00F7FF).withOpacity(0.2),
+                    blurRadius: 10,
+                    spreadRadius: -5,
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
         body: Container(
           decoration: const BoxDecoration(
             gradient: LinearGradient(
@@ -228,6 +260,7 @@ class _MessageDetailScreenState extends State<MessageDetailScreen> {
               colors: [
                 Color(0xFF0B1221),
                 Color(0xFF1A1B3F),
+                Color(0xFF0B1221),
               ],
             ),
           ),
@@ -242,14 +275,23 @@ class _MessageDetailScreenState extends State<MessageDetailScreen> {
     }
 
     return Scaffold(
-      backgroundColor: Colors.transparent,
+      backgroundColor: const Color(0xFF0B1221),
       appBar: AppBar(
         backgroundColor: const Color(0xFF1A1B3F),
+        elevation: 0,
+        leading: IconButton(
+          icon: const Icon(
+            Icons.arrow_back,
+            color: Color(0xFF00F7FF),
+          ),
+          onPressed: () => Navigator.pop(context),
+        ),
         title: widget.isOpenChat
             ? const Text(
                 'みんなのチャット',
                 style: TextStyle(
                   color: Colors.white,
+                  fontSize: 18,
                   fontWeight: FontWeight.bold,
                 ),
               )
@@ -262,7 +304,11 @@ class _MessageDetailScreenState extends State<MessageDetailScreen> {
                   if (!snapshot.hasData || !snapshot.data!.exists) {
                     return const Text(
                       'メッセージが存在しません',
-                      style: TextStyle(color: Colors.white),
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                      ),
                     );
                   }
                   final message = Message.fromFirestore(snapshot.data!);
@@ -273,11 +319,32 @@ class _MessageDetailScreenState extends State<MessageDetailScreen> {
                     displayName,
                     style: const TextStyle(
                       color: Colors.white,
+                      fontSize: 18,
                       fontWeight: FontWeight.bold,
                     ),
                   );
                 },
               ),
+        bottom: PreferredSize(
+          preferredSize: const Size.fromHeight(1),
+          child: Container(
+            decoration: BoxDecoration(
+              border: const Border(
+                bottom: BorderSide(
+                  color: Color(0xFF00F7FF),
+                  width: 1,
+                ),
+              ),
+              boxShadow: [
+                BoxShadow(
+                  color: const Color(0xFF00F7FF).withOpacity(0.2),
+                  blurRadius: 10,
+                  spreadRadius: -5,
+                ),
+              ],
+            ),
+          ),
+        ),
       ),
       body: Container(
         decoration: const BoxDecoration(
@@ -287,6 +354,7 @@ class _MessageDetailScreenState extends State<MessageDetailScreen> {
             colors: [
               Color(0xFF0B1221),
               Color(0xFF1A1B3F),
+              Color(0xFF0B1221),
             ],
           ),
         ),

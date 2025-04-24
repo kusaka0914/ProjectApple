@@ -195,22 +195,74 @@ class EditProfileScreenState extends State<EditProfileScreen> {
     return Scaffold(
       backgroundColor: const Color(0xFF0B1221),
       appBar: AppBar(
-        backgroundColor: Colors.transparent,
+        backgroundColor: const Color(0xFF1A1B3F),
         elevation: 0,
+        title: const Text(
+          'プロフィール編集',
+          style: TextStyle(
+            color: Colors.white,
+            fontSize: 18,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+        leading: IconButton(
+          icon: const Icon(
+            Icons.arrow_back,
+            color: Color(0xFF00F7FF),
+          ),
+          onPressed: () => Navigator.pop(context),
+        ),
         actions: [
           if (!_isLoading)
-            TextButton(
-              onPressed: _saveProfile,
-              child: const Text(
-                '保存',
-                style: TextStyle(
-                  color: Color(0xFF00F7FF),
-                  fontSize: 16,
-                  fontWeight: FontWeight.bold,
+            Padding(
+              padding: const EdgeInsets.all(8.0),
+              child: ElevatedButton(
+                onPressed: _saveProfile,
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Color(0x4000F7FF),
+                  foregroundColor: const Color(0xFF1A1B3F),
+                  elevation: 0,
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 20, vertical: 0),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8),
+                    side: const BorderSide(
+                      color: Color(0xFF00F7FF),
+                      width: 1,
+                    ),
+                  ),
+                ),
+                child: const Text(
+                  '保存',
+                  style: TextStyle(
+                    color: Color(0xFF00F7FF),
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
               ),
             ),
         ],
+        bottom: PreferredSize(
+          preferredSize: const Size.fromHeight(1),
+          child: Container(
+            decoration: BoxDecoration(
+              border: const Border(
+                bottom: BorderSide(
+                  color: Color(0xFF00F7FF),
+                  width: 1,
+                ),
+              ),
+              boxShadow: [
+                BoxShadow(
+                  color: const Color(0xFF00F7FF).withOpacity(0.2),
+                  blurRadius: 10,
+                  spreadRadius: -5,
+                ),
+              ],
+            ),
+          ),
+        ),
       ),
       body: Container(
         decoration: const BoxDecoration(
@@ -453,77 +505,123 @@ class EditProfileScreenState extends State<EditProfileScreen> {
     int? maxLines,
     String? Function(String?)? validator,
   }) {
-    return Container(
-      decoration: BoxDecoration(
-        color: const Color(0xFF1A1B3F).withOpacity(0.5),
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(
-          color: const Color(0xFF00F7FF),
-          width: 1,
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            Icon(
+              _getIconForField(labelText),
+              color: const Color(0xFF00F7FF),
+              size: 20,
+            ),
+            const SizedBox(width: 8),
+            Text(
+              labelText,
+              style: const TextStyle(
+                color: Color(0xFF00F7FF),
+                fontSize: 14,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ],
         ),
-        boxShadow: const [
-          BoxShadow(
-            color: Color(0x4000F7FF),
-            blurRadius: 8,
-            spreadRadius: 1,
-          ),
-        ],
-      ),
-      child: TextFormField(
-        controller: controller,
-        decoration: InputDecoration(
-          labelText: labelText,
-          helperText: helperText,
-          hintText: hintText,
-          labelStyle: const TextStyle(
-            color: Color(0xFF00F7FF),
-          ),
-          helperStyle: TextStyle(
-            color: Colors.white.withOpacity(0.6),
-          ),
-          hintStyle: TextStyle(
-            color: Colors.white.withOpacity(0.3),
-          ),
-          border: OutlineInputBorder(
+        const SizedBox(height: 8),
+        Container(
+          decoration: BoxDecoration(
+            color: const Color(0xFF0B1221),
             borderRadius: BorderRadius.circular(12),
-            borderSide: BorderSide.none,
-          ),
-          enabledBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(12),
-            borderSide: BorderSide.none,
-          ),
-          focusedBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(12),
-            borderSide: const BorderSide(
-              color: Color(0xFF00F7FF),
-              width: 2,
+            border: Border.all(
+              color: const Color(0xFF00F7FF),
+              width: 1,
             ),
           ),
-          errorBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(12),
-            borderSide: const BorderSide(
-              color: Colors.red,
-              width: 2,
+          child: TextFormField(
+            controller: controller,
+            decoration: InputDecoration(
+              hintText: hintText,
+              hintStyle: TextStyle(
+                color: Colors.white.withOpacity(0.3),
+                fontSize: 14,
+              ),
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: BorderSide.none,
+              ),
+              enabledBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: BorderSide.none,
+              ),
+              focusedBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: const BorderSide(
+                  color: Color(0xFF00F7FF),
+                  width: 1,
+                ),
+              ),
+              errorBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: const BorderSide(
+                  color: Colors.red,
+                  width: 1,
+                ),
+              ),
+              focusedErrorBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: const BorderSide(
+                  color: Colors.red,
+                  width: 1,
+                ),
+              ),
+              contentPadding: const EdgeInsets.all(16),
+              errorStyle: const TextStyle(
+                color: Colors.red,
+                fontSize: 12,
+              ),
             ),
-          ),
-          focusedErrorBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(12),
-            borderSide: const BorderSide(
-              color: Colors.red,
-              width: 2,
+            style: const TextStyle(
+              color: Colors.white,
+              fontSize: 16,
             ),
-          ),
-          contentPadding: const EdgeInsets.symmetric(
-            horizontal: 16,
-            vertical: 16,
+            maxLines: maxLines ?? 1,
+            validator: validator,
           ),
         ),
-        style: const TextStyle(
-          color: Colors.white,
-        ),
-        maxLines: maxLines ?? 1,
-        validator: validator,
-      ),
+        if (helperText != null)
+          Padding(
+            padding: const EdgeInsets.only(top: 8, left: 8),
+            child: Text(
+              helperText,
+              style: TextStyle(
+                color: Colors.white.withOpacity(0.6),
+                fontSize: 12,
+              ),
+            ),
+          ),
+      ],
     );
+  }
+
+  IconData _getIconForField(String labelText) {
+    switch (labelText) {
+      case 'ユーザーネーム':
+        return Icons.person;
+      case 'ニックネーム':
+        return Icons.face;
+      case '自己紹介':
+        return Icons.description;
+      case 'MBTI':
+        return Icons.psychology;
+      case '職種':
+        return Icons.work;
+      case '出身・在学大学（任意）':
+        return Icons.school;
+      case '好きなお店・県内企業':
+        return Icons.favorite;
+      case '外部リンク':
+        return Icons.link;
+      default:
+        return Icons.edit;
+    }
   }
 }

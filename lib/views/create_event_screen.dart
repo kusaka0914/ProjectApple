@@ -167,13 +167,18 @@ class _CreateEventScreenState extends State<CreateEventScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.transparent,
+      backgroundColor: const Color(0xFF0B1221),
       appBar: AppBar(
         backgroundColor: const Color(0xFF1A1B3F),
-        // title: const Text(
-        //   'イベントを作成',
-        //   style: TextStyle(color: Colors.white),
-        // ),
+        elevation: 0,
+        title: const Text(
+          'イベントを作成',
+          style: TextStyle(
+            color: Colors.white,
+            fontSize: 18,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
         leading: IconButton(
           icon: const Icon(
             Icons.arrow_back,
@@ -183,36 +188,55 @@ class _CreateEventScreenState extends State<CreateEventScreen> {
         ),
         actions: [
           if (!_isLoading)
-            Container(
-              margin: const EdgeInsets.only(right: 8),
-              decoration: BoxDecoration(
-                boxShadow: [
-                  BoxShadow(
-                    color: const Color(0xFF00F7FF).withOpacity(0.2),
-                    blurRadius: 10,
-                    spreadRadius: -5,
-                  ),
-                ],
-              ),
-              child: TextButton(
+            Padding(
+              padding: const EdgeInsets.all(8.0),
+              child: ElevatedButton(
                 onPressed: _createEvent,
-                style: TextButton.styleFrom(
-                  backgroundColor: const Color(0xFF00F7FF),
-                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Color(0x4000F7FF),
+                  foregroundColor: const Color(0xFF1A1B3F),
+                  elevation: 0,
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 20, vertical: 0),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(8),
+                    side: const BorderSide(
+                      color: Color(0xFF00F7FF),
+                      width: 1,
+                    ),
                   ),
                 ),
                 child: const Text(
                   '作成',
                   style: TextStyle(
-                    color: Colors.black,
+                    color: Color(0xFF00F7FF),
+                    fontSize: 16,
                     fontWeight: FontWeight.bold,
                   ),
                 ),
               ),
             ),
         ],
+        bottom: PreferredSize(
+          preferredSize: const Size.fromHeight(1),
+          child: Container(
+            decoration: BoxDecoration(
+              border: const Border(
+                bottom: BorderSide(
+                  color: Color(0xFF00F7FF),
+                  width: 1,
+                ),
+              ),
+              boxShadow: [
+                BoxShadow(
+                  color: const Color(0xFF00F7FF).withOpacity(0.2),
+                  blurRadius: 10,
+                  spreadRadius: -5,
+                ),
+              ],
+            ),
+          ),
+        ),
       ),
       body: Container(
         decoration: const BoxDecoration(
@@ -222,6 +246,7 @@ class _CreateEventScreenState extends State<CreateEventScreen> {
             colors: [
               Color(0xFF0B1221),
               Color(0xFF1A1B3F),
+              Color(0xFF0B1221),
             ],
           ),
         ),
@@ -263,10 +288,10 @@ class _CreateEventScreenState extends State<CreateEventScreen> {
               const SizedBox(height: 24),
               _buildTextField(
                 controller: _titleController,
-                labelText: 'イベントタイトル',
+                labelText: 'イベント名',
                 validator: (value) {
                   if (value == null || value.isEmpty) {
-                    return 'タイトルを入力してください';
+                    return 'イベント名を入力してください';
                   }
                   return null;
                 },
@@ -274,74 +299,88 @@ class _CreateEventScreenState extends State<CreateEventScreen> {
               const SizedBox(height: 16),
               _buildTextField(
                 controller: _descriptionController,
-                labelText: 'イベント詳細',
+                labelText: 'イベント概要',
                 maxLines: 3,
                 validator: (value) {
                   if (value == null || value.isEmpty) {
-                    return '詳細を入力してください';
+                    return 'イベント概要を入力してください';
                   }
                   return null;
                 },
               ),
               const SizedBox(height: 24),
-              Container(
-                padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  color: const Color(0xFF1A1B3F),
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(
-                    color: const Color(0xFF00F7FF),
-                    width: 1,
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text(
+                    '開催日時',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
-                  boxShadow: [
-                    BoxShadow(
-                      color: const Color(0xFF00F7FF).withOpacity(0.1),
-                      blurRadius: 8,
-                      spreadRadius: -4,
-                    ),
-                  ],
-                ),
-                child: Row(
-                  children: [
-                    Expanded(
-                      child: TextButton.icon(
-                        onPressed: _selectDate,
-                        icon: const Icon(
-                          Icons.calendar_today,
-                          color: Color(0xFF00F7FF),
+                  const SizedBox(height: 8),
+                  Container(
+                    padding: const EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFF1A1B3F),
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(
+                        color: const Color(0xFF00F7FF),
+                        width: 1,
+                      ),
+                      boxShadow: [
+                        BoxShadow(
+                          color: const Color(0xFF00F7FF).withOpacity(0.1),
+                          blurRadius: 8,
+                          spreadRadius: -4,
                         ),
-                        label: Text(
-                          '日付: ${_selectedDate.year}/${_selectedDate.month}/${_selectedDate.day}',
-                          style: const TextStyle(
-                            color: Colors.white,
+                      ],
+                    ),
+                    child: Row(
+                      children: [
+                        Expanded(
+                          child: TextButton.icon(
+                            onPressed: _selectDate,
+                            icon: const Icon(
+                              Icons.calendar_today,
+                              color: Color(0xFF00F7FF),
+                            ),
+                            label: Text(
+                              '日付: ${_selectedDate.year}/${_selectedDate.month}/${_selectedDate.day}',
+                              style: const TextStyle(
+                                color: Colors.white,
+                              ),
+                            ),
+                            style: TextButton.styleFrom(
+                              backgroundColor: Colors.transparent,
+                            ),
                           ),
                         ),
-                        style: TextButton.styleFrom(
-                          backgroundColor: Colors.transparent,
-                        ),
-                      ),
-                    ),
-                    const SizedBox(width: 16),
-                    Expanded(
-                      child: TextButton.icon(
-                        onPressed: _selectTime,
-                        icon: const Icon(
-                          Icons.access_time,
-                          color: Color(0xFF00F7FF),
-                        ),
-                        label: Text(
-                          '時間: ${_selectedTime.format(context)}',
-                          style: const TextStyle(
-                            color: Colors.white,
+                        const SizedBox(width: 16),
+                        Expanded(
+                          child: TextButton.icon(
+                            onPressed: _selectTime,
+                            icon: const Icon(
+                              Icons.access_time,
+                              color: Color(0xFF00F7FF),
+                            ),
+                            label: Text(
+                              '時間: ${_selectedTime.format(context)}',
+                              style: const TextStyle(
+                                color: Colors.white,
+                              ),
+                            ),
+                            style: TextButton.styleFrom(
+                              backgroundColor: Colors.transparent,
+                            ),
                           ),
                         ),
-                        style: TextButton.styleFrom(
-                          backgroundColor: Colors.transparent,
-                        ),
-                      ),
+                      ],
                     ),
-                  ],
-                ),
+                  ),
+                ],
               ),
               const SizedBox(height: 16),
               _buildTextField(
@@ -395,65 +434,66 @@ class _CreateEventScreenState extends State<CreateEventScreen> {
     TextInputType? keyboardType,
     String? Function(String?)? validator,
   }) {
-    return Container(
-      decoration: BoxDecoration(
-        color: const Color(0xFF1A1B3F),
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(
-          color: const Color(0xFF00F7FF),
-          width: 1,
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          labelText,
+          style: const TextStyle(
+            color: Colors.white,
+            fontSize: 16,
+            fontWeight: FontWeight.bold,
+          ),
         ),
-        boxShadow: [
-          BoxShadow(
-            color: const Color(0xFF00F7FF).withOpacity(0.1),
-            blurRadius: 8,
-            spreadRadius: -4,
-          ),
-        ],
-      ),
-      child: TextFormField(
-        controller: controller,
-        decoration: InputDecoration(
-          labelText: labelText,
-          labelStyle: const TextStyle(color: Colors.white70),
-          suffixText: suffixText,
-          suffixStyle: const TextStyle(color: Color(0xFF00F7FF)),
-          border: OutlineInputBorder(
+        const SizedBox(height: 8),
+        Container(
+          decoration: BoxDecoration(
+            color: const Color(0xFF1A1B3F),
             borderRadius: BorderRadius.circular(12),
-            borderSide: BorderSide.none,
-          ),
-          enabledBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(12),
-            borderSide: BorderSide.none,
-          ),
-          focusedBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(12),
-            borderSide: const BorderSide(
-              color: Color(0xFF00F7FF),
-              width: 2,
-            ),
-          ),
-          errorBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(12),
-            borderSide: const BorderSide(
-              color: Colors.red,
+            border: Border.all(
+              color: const Color(0xFF00F7FF),
               width: 1,
             ),
+            boxShadow: [
+              BoxShadow(
+                color: const Color(0xFF00F7FF).withOpacity(0.1),
+                blurRadius: 8,
+                spreadRadius: -4,
+              ),
+            ],
           ),
-          focusedErrorBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(12),
-            borderSide: const BorderSide(
-              color: Colors.red,
-              width: 2,
+          child: TextFormField(
+            controller: controller,
+            decoration: InputDecoration(
+              hintText: '${labelText}を入力してください',
+              hintStyle: const TextStyle(color: Colors.white54),
+              suffixText: suffixText,
+              suffixStyle: const TextStyle(color: Color(0xFF00F7FF)),
+              contentPadding: const EdgeInsets.all(16),
+              border: InputBorder.none,
+              errorBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: const BorderSide(
+                  color: Colors.red,
+                  width: 1,
+                ),
+              ),
+              focusedErrorBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: const BorderSide(
+                  color: Colors.red,
+                  width: 2,
+                ),
+              ),
             ),
+            style: const TextStyle(color: Colors.white),
+            maxLines: maxLines,
+            keyboardType: keyboardType,
+            validator: validator,
           ),
-          contentPadding: const EdgeInsets.all(16),
         ),
-        style: const TextStyle(color: Colors.white),
-        maxLines: maxLines,
-        keyboardType: keyboardType,
-        validator: validator,
-      ),
+        const SizedBox(height: 8),
+      ],
     );
   }
 }

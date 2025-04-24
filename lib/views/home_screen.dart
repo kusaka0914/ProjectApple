@@ -24,14 +24,19 @@ class HomeScreen extends ConsumerStatefulWidget {
 class _HomeScreenState extends ConsumerState<HomeScreen> {
   int _currentIndex = 0;
   String? _selectedJobType;
+  bool _showFreeTimeEvents = false;
 
-  final List<Widget> _tabs = [
-    const HomeTab(),
-    const EventTab(),
-    const JobTab(),
-    const InfoTab(),
-    const ProfileTab(),
-  ];
+  List<Widget> get _tabs => [
+        const HomeTab(),
+        _showFreeTimeEvents
+            ? const FreeTimeEventListScreen()
+            : const EventTab(),
+        _selectedJobType == 'part_time'
+            ? const PartTimeJobListScreen()
+            : const JobTab(),
+        const InfoTab(),
+        const ProfileTab(),
+      ];
 
   void _showJobTypeModal() {
     showModalBottomSheet(
@@ -126,13 +131,11 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                   ),
                 ),
                 onTap: () {
+                  setState(() {
+                    _selectedJobType = 'part_time';
+                    _currentIndex = 2;
+                  });
                   Navigator.pop(context);
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => const PartTimeJobListScreen(),
-                    ),
-                  );
                 },
               ),
               const SizedBox(height: 16),
@@ -522,10 +525,11 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                   ),
                 ),
                 onTap: () {
+                  Navigator.pop(context);
                   setState(() {
+                    _showFreeTimeEvents = false;
                     _currentIndex = 1;
                   });
-                  Navigator.pop(context);
                 },
               ),
               ListTile(
@@ -552,12 +556,10 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                 ),
                 onTap: () {
                   Navigator.pop(context);
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => const FreeTimeEventListScreen(),
-                    ),
-                  );
+                  setState(() {
+                    _showFreeTimeEvents = true;
+                    _currentIndex = 1;
+                  });
                 },
               ),
               const SizedBox(height: 16),

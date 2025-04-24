@@ -121,7 +121,46 @@ class _JobApplyScreenState extends State<JobApplyScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.transparent,
+      backgroundColor: const Color(0xFF0B1221),
+      appBar: AppBar(
+        backgroundColor: const Color(0xFF1A1B3F),
+        elevation: 0,
+        leading: IconButton(
+          icon: const Icon(
+            Icons.arrow_back,
+            color: Color(0xFF00F7FF),
+          ),
+          onPressed: () => Navigator.pop(context),
+        ),
+        title: const Text(
+          '案件に応募',
+          style: TextStyle(
+            color: Colors.white,
+            fontSize: 18,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+        bottom: PreferredSize(
+          preferredSize: const Size.fromHeight(1),
+          child: Container(
+            decoration: BoxDecoration(
+              border: const Border(
+                bottom: BorderSide(
+                  color: Color(0xFF00F7FF),
+                  width: 1,
+                ),
+              ),
+              boxShadow: [
+                BoxShadow(
+                  color: const Color(0xFF00F7FF).withOpacity(0.2),
+                  blurRadius: 10,
+                  spreadRadius: -5,
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
       body: Container(
         decoration: const BoxDecoration(
           gradient: LinearGradient(
@@ -130,6 +169,7 @@ class _JobApplyScreenState extends State<JobApplyScreen> {
             colors: [
               Color(0xFF0B1221),
               Color(0xFF1A1B3F),
+              Color(0xFF0B1221),
             ],
           ),
         ),
@@ -168,41 +208,6 @@ class _JobApplyScreenState extends State<JobApplyScreen> {
 
             return CustomScrollView(
               slivers: [
-                SliverAppBar(
-                  backgroundColor: const Color(0xFF1A1B3F),
-                  pinned: true,
-                  leading: IconButton(
-                    icon: const Icon(
-                      Icons.arrow_back,
-                      color: Color(0xFF00F7FF),
-                    ),
-                    onPressed: () => Navigator.pop(context),
-                  ),
-                  title: const Text(
-                    '案件に応募',
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  flexibleSpace: Container(
-                    decoration: BoxDecoration(
-                      border: const Border(
-                        bottom: BorderSide(
-                          color: Color(0xFF00F7FF),
-                          width: 1,
-                        ),
-                      ),
-                      boxShadow: [
-                        BoxShadow(
-                          color: const Color(0xFF00F7FF).withOpacity(0.2),
-                          blurRadius: 10,
-                          spreadRadius: -5,
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
                 SliverToBoxAdapter(
                   child: Padding(
                     padding: const EdgeInsets.all(16),

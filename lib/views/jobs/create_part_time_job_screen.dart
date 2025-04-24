@@ -108,7 +108,77 @@ class _CreatePartTimeJobScreenState extends State<CreatePartTimeJobScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.transparent,
+      backgroundColor: const Color(0xFF0B1221),
+      appBar: AppBar(
+        backgroundColor: const Color(0xFF1A1B3F),
+        elevation: 0,
+        title: const Text(
+          'アルバイトを募集',
+          style: TextStyle(
+            color: Colors.white,
+            fontSize: 18,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+        leading: IconButton(
+          icon: const Icon(
+            Icons.arrow_back,
+            color: Color(0xFF00F7FF),
+          ),
+          onPressed: () => Navigator.pop(context),
+        ),
+        actions: [
+          if (!_isLoading)
+            Padding(
+              padding: const EdgeInsets.all(8.0),
+              child: ElevatedButton(
+                onPressed: _submitJob,
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0x4000F7FF),
+                  foregroundColor: const Color(0xFF1A1B3F),
+                  elevation: 0,
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 20, vertical: 0),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8),
+                    side: const BorderSide(
+                      color: Color(0xFF00F7FF),
+                      width: 1,
+                    ),
+                  ),
+                ),
+                child: const Text(
+                  '作成',
+                  style: TextStyle(
+                    color: Color(0xFF00F7FF),
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
+            ),
+        ],
+        bottom: PreferredSize(
+          preferredSize: const Size.fromHeight(1),
+          child: Container(
+            decoration: BoxDecoration(
+              border: const Border(
+                bottom: BorderSide(
+                  color: Color(0xFF00F7FF),
+                  width: 1,
+                ),
+              ),
+              boxShadow: [
+                BoxShadow(
+                  color: const Color(0xFF00F7FF).withOpacity(0.2),
+                  blurRadius: 10,
+                  spreadRadius: -5,
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
       body: Container(
         decoration: const BoxDecoration(
           gradient: LinearGradient(
@@ -122,41 +192,6 @@ class _CreatePartTimeJobScreenState extends State<CreatePartTimeJobScreen> {
         ),
         child: CustomScrollView(
           slivers: [
-            SliverAppBar(
-              backgroundColor: const Color(0xFF1A1B3F),
-              pinned: true,
-              leading: IconButton(
-                icon: const Icon(
-                  Icons.arrow_back,
-                  color: Color(0xFF00F7FF),
-                ),
-                onPressed: () => Navigator.pop(context),
-              ),
-              title: const Text(
-                'アルバイトを募集',
-                style: TextStyle(
-                  color: Colors.white,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-              flexibleSpace: Container(
-                decoration: BoxDecoration(
-                  border: const Border(
-                    bottom: BorderSide(
-                      color: Color(0xFF00F7FF),
-                      width: 1,
-                    ),
-                  ),
-                  boxShadow: [
-                    BoxShadow(
-                      color: const Color(0xFF00F7FF).withOpacity(0.2),
-                      blurRadius: 10,
-                      spreadRadius: -5,
-                    ),
-                  ],
-                ),
-              ),
-            ),
             SliverToBoxAdapter(
               child: Padding(
                 padding: const EdgeInsets.all(16),
@@ -295,62 +330,6 @@ class _CreatePartTimeJobScreenState extends State<CreatePartTimeJobScreen> {
           ],
         ),
       ),
-      bottomNavigationBar: Container(
-        decoration: BoxDecoration(
-          color: const Color(0xFF1A1B3F),
-          border: const Border(
-            top: BorderSide(
-              color: Color(0xFF00F7FF),
-              width: 1,
-            ),
-          ),
-          boxShadow: [
-            BoxShadow(
-              color: const Color(0xFF00F7FF).withOpacity(0.2),
-              blurRadius: 10,
-              spreadRadius: -5,
-            ),
-          ],
-        ),
-        child: Padding(
-          padding: EdgeInsets.only(
-            left: 16,
-            right: 16,
-            top: 12,
-            bottom: 12 + MediaQuery.of(context).padding.bottom,
-          ),
-          child: ElevatedButton(
-            onPressed: _isLoading ? null : _submitJob,
-            style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFF00F7FF),
-              foregroundColor: const Color(0xFF1A1B3F),
-              padding: const EdgeInsets.symmetric(vertical: 16),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12),
-              ),
-              elevation: 0,
-            ),
-            child: _isLoading
-                ? const SizedBox(
-                    height: 20,
-                    width: 20,
-                    child: CircularProgressIndicator(
-                      strokeWidth: 2,
-                      valueColor: AlwaysStoppedAnimation<Color>(
-                        Color(0xFF1A1B3F),
-                      ),
-                    ),
-                  )
-                : const Text(
-                    '投稿する',
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-          ),
-        ),
-      ),
     );
   }
 
@@ -361,46 +340,64 @@ class _CreatePartTimeJobScreenState extends State<CreatePartTimeJobScreen> {
     TextInputType? keyboardType,
     String? Function(String?)? validator,
   }) {
-    return TextFormField(
-      controller: controller,
-      maxLines: maxLines ?? 1,
-      keyboardType: keyboardType,
-      validator: validator,
-      style: const TextStyle(color: Colors.white),
-      decoration: InputDecoration(
-        labelText: labelText,
-        labelStyle: const TextStyle(color: Color(0xFF00F7FF)),
-        enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: const BorderSide(
-            color: Color(0xFF00F7FF),
-            width: 1,
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          labelText,
+          style: const TextStyle(
+            color: Colors.white,
+            fontSize: 16,
+            fontWeight: FontWeight.bold,
           ),
         ),
-        focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: const BorderSide(
-            color: Color(0xFF00F7FF),
-            width: 2,
+        const SizedBox(height: 8),
+        Container(
+          decoration: BoxDecoration(
+            color: const Color(0xFF1A1B3F),
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(
+              color: const Color(0xFF00F7FF),
+              width: 1,
+            ),
+            boxShadow: [
+              BoxShadow(
+                color: const Color(0xFF00F7FF).withOpacity(0.1),
+                blurRadius: 8,
+                spreadRadius: -4,
+              ),
+            ],
+          ),
+          child: TextFormField(
+            controller: controller,
+            maxLines: maxLines ?? 1,
+            keyboardType: keyboardType,
+            validator: validator,
+            style: const TextStyle(color: Colors.white),
+            decoration: InputDecoration(
+              hintText: '${labelText}を入力してください',
+              hintStyle: const TextStyle(color: Colors.white54),
+              contentPadding: const EdgeInsets.all(16),
+              border: InputBorder.none,
+              errorBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: const BorderSide(
+                  color: Colors.red,
+                  width: 1,
+                ),
+              ),
+              focusedErrorBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: const BorderSide(
+                  color: Colors.red,
+                  width: 2,
+                ),
+              ),
+            ),
           ),
         ),
-        errorBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: BorderSide(
-            color: Colors.red.shade300,
-            width: 1,
-          ),
-        ),
-        focusedErrorBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: BorderSide(
-            color: Colors.red.shade300,
-            width: 2,
-          ),
-        ),
-        filled: true,
-        fillColor: const Color(0xFF1A1B3F).withOpacity(0.5),
-      ),
+        const SizedBox(height: 8),
+      ],
     );
   }
 }

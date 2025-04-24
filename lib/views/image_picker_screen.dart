@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'free_time/create_event_screen.dart' as free_time;
 import 'dart:io';
-import 'create_event_screen.dart' as official;
+import 'create_event_screen.dart';
 
 class ImagePickerScreen extends StatefulWidget {
   const ImagePickerScreen({super.key});
@@ -32,7 +32,7 @@ class _ImagePickerScreenState extends State<ImagePickerScreen> {
           Navigator.push(
             context,
             MaterialPageRoute(
-              builder: (context) => free_time.CreateEventScreen(
+              builder: (context) => CreateEventScreen(
                 imageFile: _imageFile!,
                 onEventCreated: () {
                   // タブを切り替える（メッセージタブのインデックスを4と仮定）

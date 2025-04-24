@@ -90,355 +90,335 @@ class _MessageTabState extends State<MessageTab> {
       );
     }
 
-    return Container(
-      decoration: const BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topCenter,
-          end: Alignment.bottomCenter,
-          colors: [
-            Color(0xFF0B1221),
-            Color(0xFF1A1B3F),
-          ],
+    return Scaffold(
+      backgroundColor: const Color(0xFF0B1221),
+      appBar: AppBar(
+        backgroundColor: const Color(0xFF1A1B3F),
+        elevation: 0,
+        leading: IconButton(
+          icon: const Icon(
+            Icons.arrow_back_ios,
+            color: Color(0xFF00F7FF),
+          ),
+          onPressed: () => Navigator.of(context).pop(),
+        ),
+        title: const Text(
+          'メッセージ',
+          style: TextStyle(
+            color: Colors.white,
+            fontSize: 18,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+        bottom: PreferredSize(
+          preferredSize: const Size.fromHeight(1),
+          child: Container(
+            decoration: BoxDecoration(
+              border: const Border(
+                bottom: BorderSide(
+                  color: Color(0xFF00F7FF),
+                  width: 1,
+                ),
+              ),
+              boxShadow: [
+                BoxShadow(
+                  color: const Color(0xFF00F7FF).withOpacity(0.2),
+                  blurRadius: 10,
+                  spreadRadius: -5,
+                ),
+              ],
+            ),
+          ),
         ),
       ),
-      child: CustomScrollView(
-        slivers: [
-          SliverAppBar(
-            title: const Text(
-              'メッセージ',
-              style: TextStyle(
-                color: Colors.white,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-            floating: true,
-            backgroundColor: const Color(0xFF1A1B3F),
+      body: Container(
+        decoration: const BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+            colors: [
+              Color(0xFF0B1221),
+              Color(0xFF1A1B3F),
+              Color(0xFF0B1221),
+            ],
           ),
-          if (_isLoading)
-            const SliverFillRemaining(
-              child: Center(
+        ),
+        child: _isLoading
+            ? const Center(
                 child: CircularProgressIndicator(
                   color: Color(0xFF00F7FF),
                 ),
-              ),
-            )
-          else if (_hasError)
-            SliverFillRemaining(
-              child: Center(
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    const Icon(
-                      Icons.error_outline,
-                      size: 48,
-                      color: Color(0xFF00F7FF),
-                    ),
-                    const SizedBox(height: 16),
-                    const Text(
-                      'メッセージの読み込みに失敗しました',
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.white,
-                      ),
-                    ),
-                    const SizedBox(height: 16),
-                    ElevatedButton.icon(
-                      onPressed: _ensureOpenChatExists,
-                      icon: const Icon(Icons.refresh, color: Colors.black),
-                      label: const Text(
-                        '再読み込み',
-                        style: TextStyle(
-                          color: Colors.black,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFF00F7FF),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            )
-          else ...[
-            // オープンチャット
-            SliverToBoxAdapter(
-              child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16.0),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Padding(
-                      padding: EdgeInsets.symmetric(vertical: 8.0),
-                      child: Text(
-                        'オープンチャット',
-                        style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
-                          color: Color(0xFF00F7FF),
-                        ),
-                      ),
-                    ),
-                    StreamBuilder<DocumentSnapshot>(
-                      stream: FirebaseFirestore.instance
-                          .collection('messages')
-                          .doc(openChatId)
-                          .snapshots(),
-                      builder: (context, snapshot) {
-                        if (!snapshot.hasData) {
-                          return const SizedBox.shrink();
-                        }
-
-                        final data =
-                            snapshot.data!.data() as Map<String, dynamic>?;
-                        if (data == null) {
-                          return const SizedBox.shrink();
-                        }
-
-                        final lastMessageTime =
-                            (data['lastMessageTime'] as Timestamp?)?.toDate();
-                        final lastMessage =
-                            data['lastMessage'] as String? ?? '';
-                        final participantsCount =
-                            data['participantsCount'] as int? ?? 0;
-
-                        return Container(
-                          margin: const EdgeInsets.only(bottom: 8.0),
-                          decoration: BoxDecoration(
-                            color: const Color(0xFF1A1B3F).withOpacity(0.5),
-                            borderRadius: BorderRadius.circular(12),
-                            border: Border.all(
-                              color: const Color(0xFF00F7FF),
-                              width: 1,
+              )
+            : ListView(
+                children: [
+                  // オープンチャット
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Padding(
+                          padding: EdgeInsets.symmetric(vertical: 8.0),
+                          child: Text(
+                            'オープンチャット',
+                            style: TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
+                              color: Color(0xFF00F7FF),
                             ),
-                            boxShadow: [
-                              BoxShadow(
-                                color: const Color(0xFF00F7FF).withOpacity(0.1),
-                                blurRadius: 8,
-                                spreadRadius: -2,
-                              ),
-                            ],
                           ),
-                          child: ListTile(
-                            contentPadding: const EdgeInsets.symmetric(
-                              horizontal: 16,
-                              vertical: 8,
-                            ),
-                            leading: Container(
+                        ),
+                        StreamBuilder<DocumentSnapshot>(
+                          stream: FirebaseFirestore.instance
+                              .collection('messages')
+                              .doc(openChatId)
+                              .snapshots(),
+                          builder: (context, snapshot) {
+                            if (!snapshot.hasData) {
+                              return const SizedBox.shrink();
+                            }
+
+                            final data =
+                                snapshot.data!.data() as Map<String, dynamic>?;
+                            if (data == null) {
+                              return const SizedBox.shrink();
+                            }
+
+                            final lastMessageTime =
+                                (data['lastMessageTime'] as Timestamp?)
+                                    ?.toDate();
+                            final lastMessage =
+                                data['lastMessage'] as String? ?? '';
+                            final participantsCount =
+                                data['participantsCount'] as int? ?? 0;
+
+                            return Container(
+                              margin: const EdgeInsets.only(bottom: 8.0),
                               decoration: BoxDecoration(
-                                shape: BoxShape.circle,
+                                color: const Color(0xFF1A1B3F).withOpacity(0.5),
+                                borderRadius: BorderRadius.circular(12),
                                 border: Border.all(
                                   color: const Color(0xFF00F7FF),
-                                  width: 2,
+                                  width: 1,
                                 ),
                                 boxShadow: [
                                   BoxShadow(
                                     color: const Color(0xFF00F7FF)
-                                        .withOpacity(0.2),
+                                        .withOpacity(0.1),
                                     blurRadius: 8,
                                     spreadRadius: -2,
                                   ),
                                 ],
                               ),
-                              child: const CircleAvatar(
-                                backgroundColor: Color(0xFF1A1B3F),
-                                child: Icon(
-                                  Icons.groups,
-                                  color: Color(0xFF00F7FF),
+                              child: ListTile(
+                                contentPadding: const EdgeInsets.symmetric(
+                                  horizontal: 16,
+                                  vertical: 8,
                                 ),
-                              ),
-                            ),
-                            title: Row(
-                              children: [
-                                const Text(
-                                  'みんなのチャット',
-                                  style: TextStyle(
-                                    color: Colors.white,
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                ),
-                                const SizedBox(width: 8),
-                                Container(
-                                  padding: const EdgeInsets.symmetric(
-                                    horizontal: 8,
-                                    vertical: 2,
-                                  ),
+                                leading: Container(
                                   decoration: BoxDecoration(
-                                    color: const Color(0xFF00F7FF)
-                                        .withOpacity(0.1),
-                                    borderRadius: BorderRadius.circular(12),
+                                    shape: BoxShape.circle,
                                     border: Border.all(
                                       color: const Color(0xFF00F7FF),
-                                      width: 1,
+                                      width: 2,
                                     ),
+                                    boxShadow: [
+                                      BoxShadow(
+                                        color: const Color(0xFF00F7FF)
+                                            .withOpacity(0.2),
+                                        blurRadius: 8,
+                                        spreadRadius: -2,
+                                      ),
+                                    ],
                                   ),
-                                  child: Text(
-                                    '$participantsCount人',
-                                    style: const TextStyle(
-                                      fontSize: 12,
+                                  child: const CircleAvatar(
+                                    backgroundColor: Color(0xFF1A1B3F),
+                                    child: Icon(
+                                      Icons.groups,
                                       color: Color(0xFF00F7FF),
                                     ),
                                   ),
                                 ),
-                              ],
-                            ),
-                            subtitle: lastMessage.isNotEmpty
-                                ? Text(
-                                    lastMessage,
-                                    maxLines: 1,
-                                    overflow: TextOverflow.ellipsis,
-                                    style:
-                                        const TextStyle(color: Colors.white70),
-                                  )
-                                : const Text(
-                                    'メッセージはありません',
-                                    style: TextStyle(
-                                      color: Colors.white38,
-                                      fontStyle: FontStyle.italic,
+                                title: Row(
+                                  children: [
+                                    const Text(
+                                      'みんなのチャット',
+                                      style: TextStyle(
+                                        color: Colors.white,
+                                        fontWeight: FontWeight.bold,
+                                      ),
                                     ),
-                                  ),
-                            trailing: lastMessageTime != null
-                                ? Text(
-                                    _formatDateTime(lastMessageTime),
-                                    style: const TextStyle(
-                                      fontSize: 12,
-                                      color: Colors.white38,
+                                    const SizedBox(width: 8),
+                                    Container(
+                                      padding: const EdgeInsets.symmetric(
+                                        horizontal: 8,
+                                        vertical: 2,
+                                      ),
+                                      decoration: BoxDecoration(
+                                        color: const Color(0xFF00F7FF)
+                                            .withOpacity(0.1),
+                                        borderRadius: BorderRadius.circular(12),
+                                        border: Border.all(
+                                          color: const Color(0xFF00F7FF),
+                                          width: 1,
+                                        ),
+                                      ),
+                                      child: Text(
+                                        '$participantsCount人',
+                                        style: const TextStyle(
+                                          fontSize: 12,
+                                          color: Color(0xFF00F7FF),
+                                        ),
+                                      ),
                                     ),
-                                  )
-                                : null,
-                            onTap: () {
-                              Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (context) => MessageDetailScreen(
-                                    messageId: openChatId,
-                                    isOpenChat: true,
-                                  ),
+                                  ],
                                 ),
-                              );
-                            },
+                                subtitle: lastMessage.isNotEmpty
+                                    ? Text(
+                                        lastMessage,
+                                        maxLines: 1,
+                                        overflow: TextOverflow.ellipsis,
+                                        style: const TextStyle(
+                                            color: Colors.white70),
+                                      )
+                                    : const Text(
+                                        'メッセージはありません',
+                                        style: TextStyle(
+                                          color: Colors.white38,
+                                          fontStyle: FontStyle.italic,
+                                        ),
+                                      ),
+                                trailing: lastMessageTime != null
+                                    ? Text(
+                                        _formatDateTime(lastMessageTime),
+                                        style: const TextStyle(
+                                          fontSize: 12,
+                                          color: Colors.white38,
+                                        ),
+                                      )
+                                    : null,
+                                onTap: () {
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (context) => MessageDetailScreen(
+                                        messageId: openChatId,
+                                        isOpenChat: true,
+                                      ),
+                                    ),
+                                  );
+                                },
+                              ),
+                            );
+                          },
+                        ),
+                        if (!_isLoading && !_hasError)
+                          const Padding(
+                            padding: EdgeInsets.symmetric(vertical: 8.0),
+                            child: Text(
+                              'プライベートメッセージ',
+                              style: TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.bold,
+                                color: Color(0xFF00F7FF),
+                              ),
+                            ),
+                          ),
+                      ],
+                    ),
+                  ),
+
+                  // プライベートメッセージ
+                  StreamBuilder<List<Message>>(
+                    stream: _getMessagesStream(currentUserId),
+                    builder: (context, snapshot) {
+                      if (snapshot.hasError) {
+                        print('Error in message stream: ${snapshot.error}');
+                        return Center(
+                          child: Text(
+                            'エラーが発生しました: ${snapshot.error}',
+                            style: const TextStyle(color: Colors.white),
                           ),
                         );
-                      },
-                    ),
-                    if (!_isLoading && !_hasError)
-                      const Padding(
-                        padding: EdgeInsets.symmetric(vertical: 8.0),
-                        child: Text(
-                          'プライベートメッセージ',
-                          style: TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.bold,
+                      }
+
+                      if (snapshot.connectionState == ConnectionState.waiting) {
+                        return const Center(
+                          child: CircularProgressIndicator(
                             color: Color(0xFF00F7FF),
                           ),
-                        ),
-                      ),
-                  ],
-                ),
-              ),
-            ),
+                        );
+                      }
 
-            // プライベートメッセージ
-            StreamBuilder<List<Message>>(
-              stream: _getMessagesStream(currentUserId),
-              builder: (context, snapshot) {
-                if (snapshot.hasError) {
-                  print('Error in message stream: ${snapshot.error}');
-                  return SliverToBoxAdapter(
-                    child: Center(
-                      child: Text(
-                        'エラーが発生しました: ${snapshot.error}',
-                        style: const TextStyle(color: Colors.white),
-                      ),
-                    ),
-                  );
-                }
+                      final messages = snapshot.data ?? [];
 
-                if (snapshot.connectionState == ConnectionState.waiting) {
-                  return const SliverToBoxAdapter(
-                    child: Center(
-                      child: CircularProgressIndicator(
-                        color: Color(0xFF00F7FF),
-                      ),
-                    ),
-                  );
-                }
-
-                final messages = snapshot.data ?? [];
-
-                if (messages.isEmpty) {
-                  return const SliverFillRemaining(
-                    hasScrollBody: false,
-                    child: Center(
-                      child: Column(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Icon(
-                            Icons.message_outlined,
-                            size: 48,
-                            color: Color(0xFF00F7FF),
+                      if (messages.isEmpty) {
+                        return const Center(
+                          child: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(
+                                Icons.message_outlined,
+                                size: 48,
+                                color: Color(0xFF00F7FF),
+                              ),
+                              SizedBox(height: 16),
+                              Text(
+                                'プライベートメッセージはまだありません',
+                                style: TextStyle(
+                                  color: Colors.white70,
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.w500,
+                                ),
+                              ),
+                              SizedBox(height: 8),
+                              Text(
+                                'メッセージを送信して会話を始めましょう',
+                                style: TextStyle(
+                                  color: Colors.white38,
+                                  fontSize: 14,
+                                ),
+                              ),
+                            ],
                           ),
-                          SizedBox(height: 16),
-                          Text(
-                            'プライベートメッセージはまだありません',
-                            style: TextStyle(
-                              color: Colors.white70,
-                              fontSize: 16,
-                              fontWeight: FontWeight.w500,
+                        );
+                      }
+
+                      return ListView.builder(
+                        shrinkWrap: true,
+                        physics: const NeverScrollableScrollPhysics(),
+                        itemCount: messages.length,
+                        itemBuilder: (context, index) {
+                          final message = messages[index];
+                          return Container(
+                            margin: const EdgeInsets.symmetric(
+                              horizontal: 16,
+                              vertical: 4,
                             ),
-                          ),
-                          SizedBox(height: 8),
-                          Text(
-                            'メッセージを送信して会話を始めましょう',
-                            style: TextStyle(
-                              color: Colors.white38,
-                              fontSize: 14,
+                            decoration: BoxDecoration(
+                              color: const Color(0xFF1A1B3F).withOpacity(0.5),
+                              borderRadius: BorderRadius.circular(12),
+                              border: Border.all(
+                                color: const Color(0xFF00F7FF),
+                                width: 1,
+                              ),
+                              boxShadow: [
+                                BoxShadow(
+                                  color:
+                                      const Color(0xFF00F7FF).withOpacity(0.1),
+                                  blurRadius: 8,
+                                  spreadRadius: -2,
+                                ),
+                              ],
                             ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  );
-                }
-
-                return SliverList(
-                  delegate: SliverChildBuilderDelegate(
-                    (context, index) {
-                      final message = messages[index];
-                      return Container(
-                        margin: const EdgeInsets.symmetric(
-                          horizontal: 16,
-                          vertical: 4,
-                        ),
-                        decoration: BoxDecoration(
-                          color: const Color(0xFF1A1B3F).withOpacity(0.5),
-                          borderRadius: BorderRadius.circular(12),
-                          border: Border.all(
-                            color: const Color(0xFF00F7FF),
-                            width: 1,
-                          ),
-                          boxShadow: [
-                            BoxShadow(
-                              color: const Color(0xFF00F7FF).withOpacity(0.1),
-                              blurRadius: 8,
-                              spreadRadius: -2,
-                            ),
-                          ],
-                        ),
-                        child: MessageListTile(message: message),
+                            child: MessageListTile(message: message),
+                          );
+                        },
                       );
                     },
-                    childCount: messages.length,
                   ),
-                );
-              },
-            ),
-          ],
-        ],
+                ],
+              ),
       ),
     );
   }

@@ -18,7 +18,46 @@ class FollowListScreen extends StatelessWidget {
     final collectionPath = isFollowers ? 'followers' : 'following';
 
     return Scaffold(
-      backgroundColor: Colors.transparent,
+      backgroundColor: const Color(0xFF0B1221),
+      appBar: AppBar(
+        backgroundColor: const Color(0xFF1A1B3F),
+        elevation: 0,
+        leading: IconButton(
+          icon: const Icon(
+            Icons.arrow_back,
+            color: Color(0xFF00F7FF),
+          ),
+          onPressed: () => Navigator.pop(context),
+        ),
+        title: Text(
+          isFollowers ? 'フォロワー' : 'フォロー中',
+          style: const TextStyle(
+            color: Colors.white,
+            fontSize: 18,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+        bottom: PreferredSize(
+          preferredSize: const Size.fromHeight(1),
+          child: Container(
+            decoration: BoxDecoration(
+              border: const Border(
+                bottom: BorderSide(
+                  color: Color(0xFF00F7FF),
+                  width: 1,
+                ),
+              ),
+              boxShadow: [
+                BoxShadow(
+                  color: const Color(0xFF00F7FF).withOpacity(0.2),
+                  blurRadius: 10,
+                  spreadRadius: -5,
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
       body: Container(
         decoration: const BoxDecoration(
           gradient: LinearGradient(
@@ -33,41 +72,6 @@ class FollowListScreen extends StatelessWidget {
         ),
         child: CustomScrollView(
           slivers: [
-            SliverAppBar(
-              backgroundColor: const Color(0xFF1A1B3F),
-              pinned: true,
-              leading: IconButton(
-                icon: const Icon(
-                  Icons.arrow_back,
-                  color: Color(0xFF00F7FF),
-                ),
-                onPressed: () => Navigator.pop(context),
-              ),
-              title: Text(
-                isFollowers ? 'フォロワー' : 'フォロー中',
-                style: const TextStyle(
-                  color: Colors.white,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-              flexibleSpace: Container(
-                decoration: BoxDecoration(
-                  border: const Border(
-                    bottom: BorderSide(
-                      color: Color(0xFF00F7FF),
-                      width: 1,
-                    ),
-                  ),
-                  boxShadow: [
-                    BoxShadow(
-                      color: const Color(0xFF00F7FF).withOpacity(0.2),
-                      blurRadius: 10,
-                      spreadRadius: -5,
-                    ),
-                  ],
-                ),
-              ),
-            ),
             StreamBuilder<QuerySnapshot>(
               stream: FirebaseFirestore.instance
                   .collection('users')
