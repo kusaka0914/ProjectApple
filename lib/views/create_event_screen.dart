@@ -3,11 +3,17 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'dart:io';
+import '../services/chat_service.dart';
 
 class CreateEventScreen extends StatefulWidget {
   final File imageFile;
+  final VoidCallback? onEventCreated;
 
-  const CreateEventScreen({required this.imageFile, super.key});
+  const CreateEventScreen({
+    required this.imageFile,
+    this.onEventCreated,
+    super.key,
+  });
 
   @override
   State<CreateEventScreen> createState() => _CreateEventScreenState();
@@ -107,29 +113,47 @@ class _CreateEventScreenState extends State<CreateEventScreen> {
         'userId': user.uid,
         'maxParticipants': int.parse(_maxParticipantsController.text),
         'participantsCount': 0,
-        'participantIds': [],
-        'visibleParticipantIds': [],
+        'participantIds': [user.uid],
+        'visibleParticipantIds': [user.uid],
         'createdAt': FieldValue.serverTimestamp(),
         'updatedAt': FieldValue.serverTimestamp(),
         'status': 'active',
         'category': 'general',
+        'type': 'official',
       };
 
       final docRef =
           await FirebaseFirestore.instance.collection('events').add(eventData);
 
+      // チャットルームを作成
+      final chatService = ChatService();
+      final chatId = await chatService.createOfficialEventChat(
+        eventId: docRef.id,
+        title: _titleController.text,
+        organizerId: user.uid,
+      );
+
+      // イベントドキュメントにchatIdを追加
+      await docRef.update({
+        'chatId': chatId,
+      });
+
       if (mounted) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(const SnackBar(content: Text('イベントを作成しました')));
-        Navigator.pop(context);
-        Navigator.pop(context);
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('イベントを作成しました')),
+        );
+
+        // ルートまで戻る
+        Navigator.of(context).popUntil((route) => route.isFirst);
+
+        // コールバックを呼び出してタブの切り替えを通知
+        widget.onEventCreated?.call();
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text('エラーが発生しました: $e')));
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('エラーが発生しました: $e')),
+        );
       }
     } finally {
       if (mounted) {

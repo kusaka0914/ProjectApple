@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
+import 'free_time/create_event_screen.dart' as free_time;
 import 'dart:io';
-import 'create_event_screen.dart';
+import 'create_event_screen.dart' as official;
 
 class ImagePickerScreen extends StatefulWidget {
   const ImagePickerScreen({super.key});
@@ -31,16 +32,25 @@ class _ImagePickerScreenState extends State<ImagePickerScreen> {
           Navigator.push(
             context,
             MaterialPageRoute(
-              builder: (context) => CreateEventScreen(imageFile: _imageFile!),
+              builder: (context) => free_time.CreateEventScreen(
+                imageFile: _imageFile!,
+                onEventCreated: () {
+                  // タブを切り替える（メッセージタブのインデックスを4と仮定）
+                  final tabController = DefaultTabController.of(context);
+                  if (tabController != null) {
+                    tabController.animateTo(4);
+                  }
+                },
+              ),
             ),
           );
         }
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text('画像の選択に失敗しました: $e')));
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('画像の選択に失敗しました: $e')),
+        );
       }
     }
   }

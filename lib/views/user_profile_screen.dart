@@ -4,7 +4,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import '../models/app_user.dart';
 import 'message_detail_screen.dart';
 import 'follow_list_screen.dart';
-import 'post_detail_screen.dart';
+import 'posts/post_detail_screen.dart';
 
 class UserProfileScreen extends StatefulWidget {
   final String userId;

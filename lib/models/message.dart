@@ -15,37 +15,48 @@ class Message {
   final String type;
   final String lastMessageSenderId;
   final int unreadCount;
+  final String? eventId;
+  final String? eventType;
+  final String? title;
+  final List<String> participants;
+  final Map<String, dynamic> participantDetails;
 
   Message({
     required this.id,
     required this.senderId,
     required this.senderName,
-    this.senderImageUrl = '',
+    required this.senderImageUrl,
     required this.receiverId,
     required this.receiverName,
-    this.receiverImageUrl = '',
+    required this.receiverImageUrl,
     required this.lastMessage,
     required this.lastMessageTime,
     this.isRead = false,
     required this.type,
     required this.lastMessageSenderId,
     required this.unreadCount,
+    this.eventId,
+    this.eventType,
+    this.title,
+    required this.participants,
+    required this.participantDetails,
   });
 
   factory Message.fromFirestore(DocumentSnapshot doc) {
     final data = doc.data() as Map<String, dynamic>;
     final currentUserId = FirebaseAuth.instance.currentUser?.uid;
+
     final type = data['type'] as String? ?? 'private';
     final participants = List<String>.from(data['participants'] ?? []);
     final participantDetails =
         Map<String, dynamic>.from(data['participantDetails'] ?? {});
 
-    String senderId = '';
-    String senderName = '';
-    String senderImageUrl = '';
-    String receiverId = '';
-    String receiverName = '';
-    String receiverImageUrl = '';
+    String senderId = data['senderId'] ?? '';
+    String senderName = data['senderName'] ?? '';
+    String senderImageUrl = data['senderImageUrl'] ?? '';
+    String receiverId = data['receiverId'] ?? '';
+    String receiverName = data['receiverName'] ?? '';
+    String receiverImageUrl = data['receiverImageUrl'] ?? '';
 
     if (type == 'private') {
       // 自分以外の参加者の情報を取得
@@ -81,17 +92,23 @@ class Message {
 
     return Message(
       id: doc.id,
-      type: type,
-      lastMessage: data['lastMessage'] ?? '',
-      lastMessageTime: (data['lastMessageTime'] as Timestamp).toDate(),
-      lastMessageSenderId: data['lastMessageSenderId'] ?? '',
-      unreadCount: data['unreadCount'] ?? 0,
       senderId: senderId,
       senderName: senderName,
       senderImageUrl: senderImageUrl,
       receiverId: receiverId,
       receiverName: receiverName,
       receiverImageUrl: receiverImageUrl,
+      lastMessage: data['lastMessage'] ?? '',
+      lastMessageTime:
+          (data['lastMessageTime'] as Timestamp?)?.toDate() ?? DateTime.now(),
+      type: type,
+      lastMessageSenderId: data['lastMessageSenderId'] ?? '',
+      unreadCount: (data['unreadCount'] as num?)?.toInt() ?? 0,
+      eventId: data['eventId'] as String?,
+      eventType: data['eventType'] as String?,
+      title: data['title'] as String?,
+      participants: participants,
+      participantDetails: participantDetails,
     );
   }
 
@@ -106,6 +123,14 @@ class Message {
       'lastMessage': lastMessage,
       'lastMessageTime': Timestamp.fromDate(lastMessageTime),
       'isRead': isRead,
+      'type': type,
+      'lastMessageSenderId': lastMessageSenderId,
+      'unreadCount': unreadCount,
+      'eventId': eventId,
+      'eventType': eventType,
+      'title': title,
+      'participants': participants,
+      'participantDetails': participantDetails,
     };
   }
 
@@ -123,6 +148,11 @@ class Message {
     String? type,
     String? lastMessageSenderId,
     int? unreadCount,
+    String? eventId,
+    String? eventType,
+    String? title,
+    List<String>? participants,
+    Map<String, dynamic>? participantDetails,
   }) {
     return Message(
       id: id ?? this.id,
@@ -138,6 +168,11 @@ class Message {
       type: type ?? this.type,
       lastMessageSenderId: lastMessageSenderId ?? this.lastMessageSenderId,
       unreadCount: unreadCount ?? this.unreadCount,
+      eventId: eventId ?? this.eventId,
+      eventType: eventType ?? this.eventType,
+      title: title ?? this.title,
+      participants: participants ?? this.participants,
+      participantDetails: participantDetails ?? this.participantDetails,
     );
   }
 }

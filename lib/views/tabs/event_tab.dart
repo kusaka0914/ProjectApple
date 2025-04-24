@@ -1,22 +1,37 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'dart:io';
 import 'package:table_calendar/table_calendar.dart';
 import 'package:intl/intl.dart';
 import '../../models/event.dart';
 import '../event_detail_screen.dart';
 import '../image_picker_screen.dart';
+import '../create_event_screen.dart';
 
 class EventTab extends StatefulWidget {
-  const EventTab({super.key});
+  const EventTab({Key? key}) : super(key: key);
 
   @override
-  State<EventTab> createState() => _EventTabState();
+  _EventTabState createState() => _EventTabState();
 }
 
 class _EventTabState extends State<EventTab> {
   DateTime _focusedDay = DateTime.now();
   DateTime? _selectedDay;
   Map<DateTime, List<Event>> _events = {};
+  final TextEditingController _searchController = TextEditingController();
+  String _searchQuery = '';
+  Set<String> _matchedEventIds = {};
+  final List<String> categories = [
+    '全て',
+    '食事',
+    'カフェ',
+    'スポーツ',
+    '勉強',
+    'ゲーム',
+    'その他'
+  ];
+  String _selectedCategory = '全て';
 
   @override
   void initState() {
@@ -71,6 +86,24 @@ class _EventTabState extends State<EventTab> {
   String _formatDate(DateTime date) {
     final formatter = DateFormat('yyyy年MM月dd日 HH:mm', 'ja_JP');
     return formatter.format(date);
+  }
+
+  Future<void> _navigateToCreateEvent(File imageFile) async {
+    final result = await Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => CreateEventScreen(
+          imageFile: imageFile,
+          onEventCreated: () {
+            // タブを切り替える（メッセージタブのインデックスを4と仮定）
+            final tabController = DefaultTabController.of(context);
+            if (tabController != null) {
+              tabController.animateTo(4);
+            }
+          },
+        ),
+      ),
+    );
   }
 
   @override
