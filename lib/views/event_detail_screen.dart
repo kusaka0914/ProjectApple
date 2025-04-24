@@ -174,254 +174,228 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
                 ),
               )
             : SingleChildScrollView(
-                padding: const EdgeInsets.all(16),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Container(
-                      padding: const EdgeInsets.all(16),
-                      decoration: BoxDecoration(
-                        color: const Color(0xFF1A1B3F),
-                        borderRadius: BorderRadius.circular(12),
-                        border: Border.all(
-                          color: const Color(0xFF00F7FF),
-                          width: 1,
-                        ),
-                        boxShadow: [
-                          BoxShadow(
-                            color: const Color(0xFF00F7FF).withOpacity(0.1),
-                            blurRadius: 8,
-                            spreadRadius: -4,
-                          ),
-                        ],
-                      ),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          FutureBuilder<DocumentSnapshot>(
-                            future: FirebaseFirestore.instance
-                                .collection('users')
-                                .doc(widget.event.userId)
-                                .get(),
-                            builder: (context, snapshot) {
-                              if (!snapshot.hasData) {
-                                return const Row(
-                                  children: [
-                                    CircleAvatar(
-                                      radius: 20,
-                                      backgroundColor: Color(0xFF1A1B3F),
-                                      child: Icon(
+                    // 主催者情報
+                    FutureBuilder<DocumentSnapshot>(
+                      future: FirebaseFirestore.instance
+                          .collection('users')
+                          .doc(widget.event.userId)
+                          .get(),
+                      builder: (context, snapshot) {
+                        if (!snapshot.hasData) {
+                          return const SizedBox.shrink();
+                        }
+                        final userData =
+                            snapshot.data!.data() as Map<String, dynamic>?;
+                        return GestureDetector(
+                          onTap: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => ProfileTab(
+                                  key: ValueKey(widget.event.userId),
+                                ),
+                              ),
+                            );
+                          },
+                          child: Row(
+                            children: [
+                              CircleAvatar(
+                                radius: 20,
+                                backgroundColor: const Color(0xFF1A1B3F),
+                                child: userData?['photoUrl'] != null
+                                    ? ClipOval(
+                                        child: Image.network(
+                                          userData!['photoUrl'],
+                                          width: 40,
+                                          height: 40,
+                                          fit: BoxFit.cover,
+                                          errorBuilder:
+                                              (context, error, stackTrace) =>
+                                                  const Icon(
+                                            Icons.person,
+                                            color: Color(0xFF00F7FF),
+                                          ),
+                                        ),
+                                      )
+                                    : const Icon(
                                         Icons.person,
                                         color: Color(0xFF00F7FF),
                                       ),
-                                    ),
-                                    SizedBox(width: 12),
-                                    Text(
-                                      '読み込み中...',
-                                      style: TextStyle(color: Colors.white70),
-                                    ),
-                                  ],
-                                );
-                              }
-                              final userData = snapshot.data!.data()
-                                  as Map<String, dynamic>?;
-                              return Row(
-                                children: [
-                                  Container(
-                                    decoration: BoxDecoration(
-                                      shape: BoxShape.circle,
-                                      border: Border.all(
-                                        color: const Color(0xFF00F7FF),
-                                        width: 1,
-                                      ),
-                                    ),
-                                    child: CircleAvatar(
-                                      radius: 20,
-                                      backgroundColor: const Color(0xFF1A1B3F),
-                                      child: userData?['photoUrl'] != null
-                                          ? ClipOval(
-                                              child: Image.network(
-                                                userData!['photoUrl'],
-                                                width: 40,
-                                                height: 40,
-                                                fit: BoxFit.cover,
-                                                errorBuilder: (context, error,
-                                                        stackTrace) =>
-                                                    const Icon(
-                                                  Icons.person,
-                                                  color: Color(0xFF00F7FF),
-                                                ),
-                                              ),
-                                            )
-                                          : const Icon(
-                                              Icons.person,
-                                              color: Color(0xFF00F7FF),
-                                            ),
-                                    ),
-                                  ),
-                                  const SizedBox(width: 12),
-                                  Text(
-                                    userData?['displayName'] ?? '不明なユーザー',
-                                    style: const TextStyle(
-                                      fontSize: 16,
-                                      fontWeight: FontWeight.w500,
-                                      color: Colors.white,
-                                    ),
-                                  ),
-                                ],
-                              );
-                            },
-                          ),
-                          const SizedBox(height: 16),
-                          Text(
-                            widget.event.title,
-                            style: const TextStyle(
-                              fontSize: 24,
-                              fontWeight: FontWeight.bold,
-                              color: Colors.white,
-                            ),
-                          ),
-                          const SizedBox(height: 16),
-                          Row(
-                            children: [
+                              ),
+                              const SizedBox(width: 12),
+                              Text(
+                                userData?['displayName'] ?? '不明なユーザー',
+                                style: const TextStyle(
+                                  fontSize: 15,
+                                  color: Colors.white,
+                                  fontWeight: FontWeight.w500,
+                                ),
+                              ),
                               const Icon(
-                                Icons.calendar_today,
+                                Icons.chevron_right,
                                 color: Color(0xFF00F7FF),
                                 size: 20,
                               ),
-                              const SizedBox(width: 8),
-                              Text(
-                                _formatDate(eventDate),
-                                style: const TextStyle(
-                                  fontSize: 16,
-                                  color: Color(0xFF00F7FF),
-                                ),
-                              ),
                             ],
                           ),
-                          const SizedBox(height: 8),
-                          Row(
-                            children: [
-                              const Icon(
-                                Icons.location_on,
-                                color: Color(0xFF00F7FF),
-                                size: 20,
-                              ),
-                              const SizedBox(width: 8),
-                              Text(
-                                widget.event.location,
-                                style: const TextStyle(
-                                  fontSize: 16,
-                                  color: Color(0xFF00F7FF),
-                                ),
-                              ),
-                            ],
-                          ),
-                          const SizedBox(height: 16),
-                          Text(
-                            widget.event.description,
-                            style: const TextStyle(
-                              fontSize: 16,
-                              color: Colors.white70,
-                            ),
-                          ),
-                        ],
+                        );
+                      },
+                    ),
+                    const SizedBox(height: 24),
+
+                    // イベントタイトル
+                    Text(
+                      widget.event.title,
+                      style: const TextStyle(
+                        fontSize: 24,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white,
+                        height: 1.3,
                       ),
                     ),
                     const SizedBox(height: 24),
-                    Container(
-                      padding: const EdgeInsets.all(16),
-                      decoration: BoxDecoration(
-                        color: const Color(0xFF1A1B3F),
+
+                    // イベント写真
+                    if (widget.event.imageUrl != null) ...[
+                      ClipRRect(
                         borderRadius: BorderRadius.circular(12),
-                        border: Border.all(
-                          color: const Color(0xFF00F7FF),
-                          width: 1,
+                        child: Image.network(
+                          widget.event.imageUrl!,
+                          width: double.infinity,
+                          height: 200,
+                          fit: BoxFit.cover,
                         ),
-                        boxShadow: [
-                          BoxShadow(
-                            color: const Color(0xFF00F7FF).withOpacity(0.1),
-                            blurRadius: 8,
-                            spreadRadius: -4,
-                          ),
-                        ],
                       ),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            '参加予定者 (${widget.event.participantsCount}人)',
-                            style: const TextStyle(
-                              fontSize: 18,
-                              fontWeight: FontWeight.bold,
-                              color: Colors.white,
-                            ),
-                          ),
-                          const SizedBox(height: 16),
-                          _buildParticipantsList(),
-                        ],
+                      const SizedBox(height: 24),
+                    ],
+
+                    // イベント概要
+                    Text(
+                      widget.event.description,
+                      style: const TextStyle(
+                        fontSize: 15,
+                        color: Colors.white,
+                        height: 1.6,
+                        fontWeight: FontWeight.w400,
                       ),
                     ),
-                    const SizedBox(height: 24),
-                    Container(
-                      decoration: BoxDecoration(
-                        boxShadow: [
-                          BoxShadow(
-                            color: const Color(0xFF00F7FF).withOpacity(0.2),
-                            blurRadius: 10,
-                            spreadRadius: -5,
-                          ),
-                        ],
-                      ),
-                      child: ElevatedButton(
-                        onPressed: _toggleParticipation,
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: _isParticipating
-                              ? Colors.red.withOpacity(0.8)
-                              : const Color(0xFF00F7FF),
-                          foregroundColor:
-                              _isParticipating ? Colors.white : Colors.black,
-                          minimumSize: const Size(double.infinity, 48),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(8),
-                          ),
+                    const SizedBox(height: 32),
+
+                    // イベント基本情報
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        _buildInfoRow(
+                          Icons.calendar_today,
+                          _formatDate(eventDate),
                         ),
-                        child: Text(
-                          _isParticipating ? '参加をキャンセル' : '参加する',
+                        const SizedBox(height: 16),
+                        _buildInfoRow(
+                          Icons.location_on,
+                          widget.event.location,
+                        ),
+                        const SizedBox(height: 16),
+                        _buildInfoRow(
+                          Icons.group,
+                          '${widget.event.participantsCount}人が参加予定',
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 32),
+
+                    // 参加者リスト
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          '参加予定者 (${widget.event.participantsCount}人)',
                           style: const TextStyle(
                             fontSize: 16,
                             fontWeight: FontWeight.bold,
+                            color: Color(0xFF00F7FF),
                           ),
+                        ),
+                        const SizedBox(height: 16),
+                        _buildParticipantsList(),
+                      ],
+                    ),
+                    const SizedBox(height: 16),
+
+                    // アクションボタン
+                    ElevatedButton(
+                      onPressed: _toggleParticipation,
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: _isParticipating
+                            ? Colors.red.withOpacity(0.9)
+                            : const Color(0xFF00F7FF),
+                        foregroundColor:
+                            _isParticipating ? Colors.white : Colors.black,
+                        padding: const EdgeInsets.symmetric(vertical: 16),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        minimumSize: const Size(double.infinity, 50),
+                        elevation: 0,
+                      ),
+                      child: Text(
+                        _isParticipating ? '参加をキャンセル' : '参加する',
+                        style: const TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
                         ),
                       ),
                     ),
                     if (_isParticipating) ...[
                       const SizedBox(height: 16),
-                      Container(
-                        decoration: BoxDecoration(
-                          color: const Color(0xFF1A1B3F),
-                          borderRadius: BorderRadius.circular(12),
-                          border: Border.all(
-                            color: const Color(0xFF00F7FF),
-                            width: 1,
+                      SwitchListTile(
+                        title: const Text(
+                          '参加者として表示',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 15,
+                            fontWeight: FontWeight.w500,
                           ),
                         ),
-                        child: SwitchListTile(
-                          title: const Text(
-                            '参加者として表示',
-                            style: TextStyle(color: Colors.white),
-                          ),
-                          value: _isVisible,
-                          onChanged: (value) => _toggleVisibility(),
-                          activeColor: const Color(0xFF00F7FF),
-                          inactiveThumbColor: Colors.grey,
-                        ),
+                        value: _isVisible,
+                        onChanged: (value) => _toggleVisibility(),
+                        activeColor: const Color(0xFF00F7FF),
+                        inactiveThumbColor: Colors.grey,
                       ),
                     ],
                   ],
                 ),
               ),
       ),
+    );
+  }
+
+  Widget _buildInfoRow(IconData icon, String value) {
+    return Row(
+      children: [
+        Icon(
+          icon,
+          color: const Color(0xFF00F7FF),
+          size: 20,
+        ),
+        const SizedBox(width: 12),
+        Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              value,
+              style: const TextStyle(
+                fontSize: 16,
+                color: Colors.white,
+              ),
+            ),
+          ],
+        ),
+      ],
     );
   }
 
@@ -439,72 +413,89 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
 
         final participants = snapshot.data!;
         if (participants.isEmpty) {
-          return const Text(
-            '参加予定者はまだいません',
-            style: TextStyle(
-              color: Colors.white70,
-              fontSize: 16,
+          return Container(
+            padding: const EdgeInsets.symmetric(vertical: 32),
+            child: const Center(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(
+                    Icons.people_outline,
+                    color: Color(0xFF00F7FF),
+                    size: 48,
+                  ),
+                  SizedBox(height: 16),
+                  Text(
+                    '参加予定者はまだいません',
+                    style: TextStyle(
+                      color: Colors.white70,
+                      fontSize: 16,
+                    ),
+                  ),
+                ],
+              ),
             ),
           );
         }
 
-        return ListView.builder(
+        return ListView.separated(
           shrinkWrap: true,
           physics: const NeverScrollableScrollPhysics(),
           itemCount: participants.length,
+          separatorBuilder: (context, index) => const Divider(
+            color: Colors.white12,
+            height: 1,
+          ),
           itemBuilder: (context, index) {
             final participant = participants[index];
-            return Container(
-              margin: const EdgeInsets.symmetric(vertical: 4),
-              decoration: BoxDecoration(
-                color: const Color(0xFF0B1221),
-                borderRadius: BorderRadius.circular(8),
+            return ListTile(
+              contentPadding: const EdgeInsets.symmetric(
+                vertical: 8,
               ),
-              child: ListTile(
-                leading: Container(
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    border: Border.all(
-                      color: const Color(0xFF00F7FF),
-                      width: 1,
-                    ),
-                  ),
-                  child: CircleAvatar(
-                    backgroundColor: const Color(0xFF1A1B3F),
-                    child: participant['photoUrl'] != null
-                        ? ClipOval(
-                            child: Image.network(
-                              participant['photoUrl'],
-                              fit: BoxFit.cover,
-                              width: 40,
-                              height: 40,
-                              errorBuilder: (context, error, stackTrace) =>
-                                  const Icon(
-                                Icons.person,
-                                color: Color(0xFF00F7FF),
-                              ),
-                            ),
-                          )
-                        : const Icon(
+              leading: CircleAvatar(
+                radius: 20,
+                backgroundColor: const Color(0xFF1A1B3F),
+                child: participant['photoUrl'] != null
+                    ? ClipOval(
+                        child: Image.network(
+                          participant['photoUrl'],
+                          fit: BoxFit.cover,
+                          width: 40,
+                          height: 40,
+                          errorBuilder: (context, error, stackTrace) =>
+                              const Icon(
                             Icons.person,
                             color: Color(0xFF00F7FF),
                           ),
-                  ),
-                ),
-                title: Text(
-                  participant['displayName'] ?? 'Unknown',
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 14,
-                  ),
-                ),
-                onTap: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(builder: (context) => const ProfileTab()),
-                  );
-                },
+                        ),
+                      )
+                    : const Icon(
+                        Icons.person,
+                        color: Color(0xFF00F7FF),
+                      ),
               ),
+              title: Text(
+                participant['displayName'] ?? 'Unknown',
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 14,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+              trailing: const Icon(
+                Icons.chevron_right,
+                color: Color(0xFF00F7FF),
+              ),
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => ProfileTab(
+                      key: ValueKey(participant['id']),
+                    ),
+                  ),
+                );
+              },
             );
           },
         );

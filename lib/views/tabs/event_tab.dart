@@ -518,7 +518,7 @@ class _EventTabState extends State<EventTab> {
                     ),
                     const SizedBox(height: 4),
                     Text(
-                      '参加予定: ${event.participantsCount}人',
+                      '参加予定: ${event.participantsCount}/${event.maxParticipants}人',
                       style: const TextStyle(
                         fontSize: 14,
                         color: Colors.white70,

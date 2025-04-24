@@ -341,27 +341,13 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
             return ListView(
               children: [
                 Container(
-                  margin: const EdgeInsets.all(16),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFF1A1B3F).withOpacity(0.5),
-                    borderRadius: BorderRadius.circular(15),
-                    border: Border.all(
-                      color: const Color(0xFF00F7FF),
-                      width: 1,
-                    ),
-                    boxShadow: const [
-                      BoxShadow(
-                        color: Color(0x4000F7FF),
-                        blurRadius: 10,
-                        spreadRadius: 1,
-                      ),
-                    ],
-                  ),
+                  margin:
+                      const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Padding(
-                        padding: const EdgeInsets.all(16),
+                        padding: const EdgeInsets.symmetric(horizontal: 4),
                         child: Row(
                           children: [
                             CircleAvatar(
@@ -404,7 +390,8 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
                           ],
                         ),
                       ),
-                      if (imageUrl != null)
+                      const SizedBox(height: 16),
+                      if (imageUrl != null) ...[
                         GestureDetector(
                           onTap: () => _showFullScreenImage(imageUrl),
                           child: Container(
@@ -428,8 +415,10 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
                             ),
                           ),
                         ),
+                        const SizedBox(height: 16),
+                      ],
                       Padding(
-                        padding: const EdgeInsets.all(16),
+                        padding: const EdgeInsets.symmetric(horizontal: 4),
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
@@ -553,15 +542,6 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
                 if (_isCommentSectionVisible) ...[
                   Container(
                     margin: const EdgeInsets.symmetric(horizontal: 16),
-                    padding: const EdgeInsets.all(16),
-                    decoration: BoxDecoration(
-                      color: const Color(0xFF1A1B3F).withOpacity(0.5),
-                      borderRadius: BorderRadius.circular(15),
-                      border: Border.all(
-                        color: const Color(0xFF00F7FF),
-                        width: 1,
-                      ),
-                    ),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
@@ -636,7 +616,7 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
 
                                       return Padding(
                                         padding:
-                                            const EdgeInsets.only(bottom: 8),
+                                            const EdgeInsets.only(bottom: 16),
                                         child: Row(
                                           crossAxisAlignment:
                                               CrossAxisAlignment.start,
@@ -752,7 +732,7 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
                                   ),
                                   contentPadding: const EdgeInsets.symmetric(
                                     horizontal: 16,
-                                    vertical: 8,
+                                    vertical: 12,
                                   ),
                                 ),
                               ),

@@ -418,6 +418,8 @@ class EditProfileScreenState extends State<EditProfileScreen> {
                   ),
                   const SizedBox(width: 8),
                   Container(
+                    height: 56,
+                    margin: const EdgeInsets.only(top: 32),
                     decoration: BoxDecoration(
                       shape: BoxShape.circle,
                       border: Border.all(

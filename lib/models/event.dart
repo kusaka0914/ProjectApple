@@ -12,6 +12,7 @@ class Event {
   final List<String> visibleParticipantIds;
   final List<String> participantIds;
   final String location;
+  final int maxParticipants;
 
   Event({
     required this.id,
@@ -25,6 +26,7 @@ class Event {
     this.visibleParticipantIds = const [],
     this.participantIds = const [],
     this.location = '',
+    this.maxParticipants = 0,
   });
 
   factory Event.fromFirestore(DocumentSnapshot doc) {
@@ -42,6 +44,7 @@ class Event {
           List<String>.from(data['visibleParticipantIds'] ?? []),
       participantIds: List<String>.from(data['participantIds'] ?? []),
       location: data['location'] ?? '',
+      maxParticipants: data['maxParticipants'] ?? 0,
     );
   }
 
@@ -57,6 +60,7 @@ class Event {
       'visibleParticipantIds': visibleParticipantIds,
       'participantIds': participantIds,
       'location': location,
+      'maxParticipants': maxParticipants,
     };
   }
 }

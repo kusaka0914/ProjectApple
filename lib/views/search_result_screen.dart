@@ -313,21 +313,6 @@ class _SearchResultScreenState extends State<SearchResultScreen> {
 
         return Container(
           margin: const EdgeInsets.only(bottom: 16),
-          decoration: BoxDecoration(
-            color: const Color(0xFF1A1B3F).withOpacity(0.5),
-            borderRadius: BorderRadius.circular(12),
-            border: Border.all(
-              color: const Color(0xFF00F7FF),
-              width: 1,
-            ),
-            boxShadow: [
-              BoxShadow(
-                color: const Color(0xFF00F7FF).withOpacity(0.1),
-                blurRadius: 8,
-                spreadRadius: -2,
-              ),
-            ],
-          ),
           child: ListTile(
             contentPadding: const EdgeInsets.all(16),
             leading: Container(

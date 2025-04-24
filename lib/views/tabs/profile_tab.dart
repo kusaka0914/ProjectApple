@@ -494,6 +494,72 @@ class _ProfileTabState extends ConsumerState<ProfileTab> {
                                   ),
                               ],
                             ),
+                            if (links.isNotEmpty) ...[
+                              const SizedBox(height: 15),
+                              const Divider(
+                                color: Color(0xFF00F7FF),
+                                thickness: 0.5,
+                                height: 1,
+                              ),
+                              const SizedBox(height: 15),
+                              Row(
+                                children: [
+                                  const Icon(
+                                    Icons.link,
+                                    size: 20,
+                                    color: Color(0xFF00F7FF),
+                                  ),
+                                  const SizedBox(width: 10),
+                                  const Text(
+                                    'リンク',
+                                    style: TextStyle(
+                                      color: Color(0xFF00F7FF),
+                                      fontSize: 14,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              const SizedBox(height: 10),
+                              Column(
+                                children: links
+                                    .map((link) => Padding(
+                                          padding:
+                                              const EdgeInsets.only(bottom: 8),
+                                          child: GestureDetector(
+                                            onTap: () => _launchURL(link),
+                                            child: Container(
+                                              width: double.infinity,
+                                              padding:
+                                                  const EdgeInsets.symmetric(
+                                                vertical: 8,
+                                                horizontal: 12,
+                                              ),
+                                              decoration: BoxDecoration(
+                                                color: const Color(0xFF00F7FF)
+                                                    .withOpacity(0.1),
+                                                borderRadius:
+                                                    BorderRadius.circular(8),
+                                                border: Border.all(
+                                                  color:
+                                                      const Color(0xFF00F7FF),
+                                                  width: 1,
+                                                ),
+                                              ),
+                                              child: Text(
+                                                link,
+                                                style: const TextStyle(
+                                                  color: Color(0xFF00F7FF),
+                                                  fontSize: 14,
+                                                ),
+                                                maxLines: 1,
+                                                overflow: TextOverflow.ellipsis,
+                                              ),
+                                            ),
+                                          ),
+                                        ))
+                                    .toList(),
+                              ),
+                            ],
                           ],
                         ),
                       ),

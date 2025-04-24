@@ -161,82 +161,64 @@ class FollowListScreen extends StatelessWidget {
                               horizontal: 16,
                               vertical: 8,
                             ),
-                            child: Container(
-                              decoration: BoxDecoration(
-                                color: const Color(0xFF1A1B3F).withOpacity(0.5),
-                                borderRadius: BorderRadius.circular(12),
-                                border: Border.all(
-                                  color: const Color(0xFF00F7FF),
-                                  width: 1,
-                                ),
-                                boxShadow: [
-                                  BoxShadow(
-                                    color: const Color(0xFF00F7FF)
-                                        .withOpacity(0.1),
-                                    blurRadius: 8,
-                                    spreadRadius: -2,
-                                  ),
-                                ],
+                            child: ListTile(
+                              contentPadding: const EdgeInsets.symmetric(
+                                horizontal: 16,
+                                vertical: 8,
                               ),
-                              child: ListTile(
-                                contentPadding: const EdgeInsets.symmetric(
-                                  horizontal: 16,
-                                  vertical: 8,
-                                ),
-                                leading: Container(
-                                  decoration: BoxDecoration(
-                                    shape: BoxShape.circle,
-                                    border: Border.all(
-                                      color: const Color(0xFF00F7FF),
-                                      width: 2,
+                              leading: Container(
+                                decoration: BoxDecoration(
+                                  shape: BoxShape.circle,
+                                  border: Border.all(
+                                    color: const Color(0xFF00F7FF),
+                                    width: 2,
+                                  ),
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: const Color(0xFF00F7FF)
+                                          .withOpacity(0.2),
+                                      blurRadius: 8,
+                                      spreadRadius: -2,
                                     ),
-                                    boxShadow: [
-                                      BoxShadow(
-                                        color: const Color(0xFF00F7FF)
-                                            .withOpacity(0.2),
-                                        blurRadius: 8,
-                                        spreadRadius: -2,
-                                      ),
-                                    ],
-                                  ),
-                                  child: CircleAvatar(
-                                    radius: 24,
-                                    backgroundColor: const Color(0xFF1A1B3F),
-                                    backgroundImage: photoUrl != null
-                                        ? NetworkImage(photoUrl)
-                                        : null,
-                                    child: photoUrl == null
-                                        ? const Icon(
-                                            Icons.person,
-                                            color: Color(0xFF00F7FF),
-                                          )
-                                        : null,
-                                  ),
+                                  ],
                                 ),
-                                title: Text(
-                                  nickname,
-                                  style: const TextStyle(
-                                    color: Colors.white,
-                                    fontWeight: FontWeight.bold,
-                                  ),
+                                child: CircleAvatar(
+                                  radius: 24,
+                                  backgroundColor: const Color(0xFF1A1B3F),
+                                  backgroundImage: photoUrl != null
+                                      ? NetworkImage(photoUrl)
+                                      : null,
+                                  child: photoUrl == null
+                                      ? const Icon(
+                                          Icons.person,
+                                          color: Color(0xFF00F7FF),
+                                        )
+                                      : null,
                                 ),
-                                subtitle: Text(
-                                  '@$username',
-                                  style: const TextStyle(
-                                    color: Color(0xFF00F7FF),
-                                  ),
-                                ),
-                                onTap: () {
-                                  Navigator.push(
-                                    context,
-                                    MaterialPageRoute(
-                                      builder: (context) => UserProfileScreen(
-                                        userId: followUserId,
-                                      ),
-                                    ),
-                                  );
-                                },
                               ),
+                              title: Text(
+                                nickname,
+                                style: const TextStyle(
+                                  color: Colors.white,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                              subtitle: Text(
+                                '@$username',
+                                style: const TextStyle(
+                                  color: Color(0xFF00F7FF),
+                                ),
+                              ),
+                              onTap: () {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (context) => UserProfileScreen(
+                                      userId: followUserId,
+                                    ),
+                                  ),
+                                );
+                              },
                             ),
                           );
                         },

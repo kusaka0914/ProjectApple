@@ -42,6 +42,13 @@ class _HomeTabState extends State<HomeTab> {
     );
   }
 
+  void _showPoints() {
+    // TODO: ポイント画面への遷移を実装
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('ポイント機能は準備中です')),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Container(
@@ -59,79 +66,103 @@ class _HomeTabState extends State<HomeTab> {
         slivers: [
           SliverAppBar(
             floating: true,
+            snap: true,
             backgroundColor: const Color(0xFF1A1B3F),
+            toolbarHeight: 20,
             bottom: PreferredSize(
-              preferredSize: const Size.fromHeight(80),
+              preferredSize: const Size.fromHeight(60),
               child: Padding(
                 padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
                 child: Row(
                   children: [
+                    Container(
+                      margin: const EdgeInsets.only(right: 12),
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        border: Border.all(
+                          color: const Color(0xFF00F7FF),
+                          width: 1,
+                        ),
+                        boxShadow: [
+                          BoxShadow(
+                            color: const Color(0xFF00F7FF).withOpacity(0.1),
+                            blurRadius: 8,
+                            spreadRadius: -2,
+                          ),
+                        ],
+                      ),
+                      child: IconButton(
+                        icon: const Icon(
+                          Icons.monetization_on_outlined,
+                          color: Color(0xFF00F7FF),
+                        ),
+                        onPressed: _showPoints,
+                        tooltip: 'ポイント',
+                      ),
+                    ),
                     Expanded(
                       child: Center(
-                        child: ConstrainedBox(
-                          constraints: const BoxConstraints(maxWidth: 240),
-                          child: Container(
-                            decoration: BoxDecoration(
-                              borderRadius: BorderRadius.circular(30),
-                              border: Border.all(
-                                color: const Color(0xFF00F7FF),
-                                width: 1,
-                              ),
-                              boxShadow: [
-                                BoxShadow(
-                                  color:
-                                      const Color(0xFF00F7FF).withOpacity(0.1),
-                                  blurRadius: 8,
-                                  spreadRadius: -2,
-                                ),
-                              ],
+                        child: Container(
+                          decoration: BoxDecoration(
+                            borderRadius: BorderRadius.circular(30),
+                            border: Border.all(
+                              color: const Color(0xFF00F7FF),
+                              width: 1,
                             ),
-                            child: TextField(
-                              controller: _searchController,
-                              style: const TextStyle(
-                                color: Colors.white,
+                            boxShadow: [
+                              BoxShadow(
+                                color: const Color(0xFF00F7FF).withOpacity(0.1),
+                                blurRadius: 8,
+                                spreadRadius: -2,
+                              ),
+                            ],
+                          ),
+                          child: TextField(
+                            controller: _searchController,
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 14,
+                            ),
+                            decoration: InputDecoration(
+                              hintText: 'ユーザーを検索',
+                              hintStyle: TextStyle(
+                                color: Colors.white.withOpacity(0.5),
                                 fontSize: 14,
                               ),
-                              decoration: InputDecoration(
-                                hintText: 'ユーザーを検索',
-                                hintStyle: TextStyle(
-                                  color: Colors.white.withOpacity(0.5),
-                                  fontSize: 14,
-                                ),
-                                prefixIcon: const Icon(
-                                  Icons.search,
+                              prefixIcon: const Icon(
+                                Icons.search,
+                                color: Color(0xFF00F7FF),
+                                size: 20,
+                              ),
+                              suffixIcon: IconButton(
+                                icon: const Icon(
+                                  Icons.clear,
                                   color: Color(0xFF00F7FF),
                                   size: 20,
                                 ),
-                                suffixIcon: IconButton(
-                                  icon: const Icon(
-                                    Icons.clear,
-                                    color: Color(0xFF00F7FF),
-                                    size: 20,
-                                  ),
-                                  onPressed: () => _searchController.clear(),
-                                ),
-                                border: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(30),
-                                  borderSide: BorderSide.none,
-                                ),
-                                filled: true,
-                                fillColor:
-                                    const Color(0xFF1A1B3F).withOpacity(0.5),
-                                contentPadding: const EdgeInsets.symmetric(
-                                  vertical: 0,
-                                  horizontal: 16,
-                                ),
-                                isDense: true,
+                                onPressed: () => _searchController.clear(),
                               ),
-                              textInputAction: TextInputAction.search,
-                              onSubmitted: (_) => _onSearch(),
+                              border: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(30),
+                                borderSide: BorderSide.none,
+                              ),
+                              filled: true,
+                              fillColor:
+                                  const Color(0xFF1A1B3F).withOpacity(0.5),
+                              contentPadding: const EdgeInsets.symmetric(
+                                vertical: 0,
+                                horizontal: 16,
+                              ),
+                              isDense: true,
                             ),
+                            textInputAction: TextInputAction.search,
+                            onSubmitted: (_) => _onSearch(),
                           ),
                         ),
                       ),
                     ),
                     Container(
+                      margin: const EdgeInsets.only(left: 12),
                       decoration: BoxDecoration(
                         shape: BoxShape.circle,
                         border: Border.all(
