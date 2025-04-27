@@ -29,11 +29,10 @@ class Post with _$Post {
       throw Exception('Document data is null');
     }
 
-    final userDoc =
-        await FirebaseFirestore.instance
-            .collection('users')
-            .doc(data['userId'] as String)
-            .get();
+    final userDoc = await FirebaseFirestore.instance
+        .collection('users')
+        .doc(data['userId'] as String)
+        .get();
 
     if (!userDoc.exists) {
       throw Exception('User not found');
